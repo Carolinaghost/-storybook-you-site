@@ -214,11 +214,19 @@
     </div>
 
     <div style="margin-top:20px;">
-      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">How many children are in this photo?</span>
+      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">Who's the star of this book?</span>
+      <div class="themes" id="audiencePicker">
+        <button type="button" class="theme-pill active" data-audience="kid">A kid</button>
+        <button type="button" class="theme-pill" data-audience="adult">A parent or grandparent (gift)</button>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;" id="countLabel">How many kids are in this photo?</span>
       <div class="themes" id="childCountPicker">
         <button type="button" class="theme-pill active" data-count="1">Just 1</button>
-        <button type="button" class="theme-pill" data-count="2">2 kids</button>
-        <button type="button" class="theme-pill" data-count="3">3 kids</button>
+        <button type="button" class="theme-pill" data-count="2">2</button>
+        <button type="button" class="theme-pill" data-count="3">3</button>
       </div>
     </div>
   </div>
@@ -226,12 +234,14 @@
   <div class="page">
     <div class="step-label">Step 2</div>
     <h2>Pick a style</h2>
-    <p class="step-desc">This decides how your kid's page is drawn.</p>
+    <p class="step-desc" id="themeStepDesc">This decides how the page is drawn.</p>
     <div class="themes" id="themes">
-      <button type="button" class="theme-pill active" data-theme="Portrait">Simple portrait</button>
-      <button type="button" class="theme-pill" data-theme="Adventure scene">Adventure scene</button>
-      <button type="button" class="theme-pill" data-theme="Superhero">Superhero</button>
-      <button type="button" class="theme-pill" data-theme="Fairy tale">Fairy tale</button>
+      <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
+      <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
+      <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
+      <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
+      <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
+      <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
     </div>
     <div style="display:flex; gap:10px; margin-top:18px;">
       <button type="button" class="submit-btn" id="generateBtn" style="margin-top:0;">Generate the full story book</button>
@@ -257,8 +267,8 @@
       <div class="error-text" id="emailError">Enter a valid email.</div>
     </label>
     <label class="field">
-      <span>Anything else? (optional)</span>
-      <textarea id="notes" placeholder="Favorite animal, colors, anything you want in the book"></textarea>
+      <span>Anything to include in the story? (optional)</span>
+      <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
     </label>
 
     <button class="submit-btn" id="submitBtn">Start my coloring book</button>
@@ -333,7 +343,45 @@ document.querySelectorAll('#themes .theme-pill').forEach(btn => {
   });
 });
 
+let audience = 'kid';
 let childCount = 1;
+document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#audiencePicker .theme-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    audience = btn.dataset.audience;
+
+    const countLabel = document.getElementById('countLabel');
+    const themeStepDesc = document.getElementById('themeStepDesc');
+    document.querySelectorAll('#childCountPicker .theme-pill').forEach((pill, idx) => {
+      const n = idx + 1;
+      pill.textContent = n === 1 ? 'Just 1' : String(n);
+    });
+    if (audience === 'adult') {
+      countLabel.textContent = 'How many people are in this photo?';
+      themeStepDesc.textContent = "This decides how their page is drawn.";
+      document.getElementById('childNameLabel').textContent = "Their name";
+      document.getElementById('childName').placeholder = 'Grandma Rose';
+    } else {
+      countLabel.textContent = 'How many kids are in this photo?';
+      themeStepDesc.textContent = "This decides how your kid's page is drawn.";
+      document.getElementById('childNameLabel').textContent = childCount > 1 ? "Children's names" : "Child's name";
+      document.getElementById('childName').placeholder = childCount > 1 ? 'Ava and Milo' : 'Ava';
+    }
+
+    document.querySelectorAll('#themes .theme-pill').forEach(pill => {
+      const matches = pill.dataset.audience === 'both' || pill.dataset.audience === audience;
+      pill.style.display = matches ? 'inline-block' : 'none';
+    });
+    const activeThemePill = document.querySelector('#themes .theme-pill.active');
+    if (!activeThemePill || activeThemePill.style.display === 'none') {
+      document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
+      const portraitPill = document.querySelector('#themes .theme-pill[data-theme="Portrait"]');
+      portraitPill.classList.add('active');
+      selectedTheme = 'Portrait';
+    }
+  });
+});
 const childNameLabel = document.getElementById('childNameLabel');
 const childNameInput = document.getElementById('childName');
 document.querySelectorAll('#childCountPicker .theme-pill').forEach(btn => {
@@ -415,6 +463,8 @@ generateBtn.addEventListener('click', async () => {
       form.append('theme', selectedTheme);
       form.append('sceneIndex', i);
       form.append('childCount', childCount);
+      form.append('subjectType', audience);
+      form.append('notes', document.getElementById('notes').value.trim());
 
       const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: currentAbortController.signal });
       const data = await response.json();
