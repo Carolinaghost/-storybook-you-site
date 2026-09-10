@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storybook You — custom coloring books</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF6EA;
+    --card: #FFFFFF;
+    --ink: #2A2724;
+    --ink-soft: #6B6357;
+    --blue: #2F5FA8;
+    --blue-dark: #1F4479;
+    --orange: #E8622C;
+    --yellow: #F2AE3D;
+    --green: #4C8C5B;
+    --line: #DCD2B8;
+    --danger: #C1432B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
+  header { text-align: center; margin-bottom: 36px; }
+  .brand { font-size: 40px; color: var(--blue-dark); }
+  .tagline { color: var(--ink-soft); font-size: 17px; margin-top: 8px; }
+
+  .page {
+    background: var(--card);
+    border-radius: 18px;
+    border: 2px dashed var(--line);
+    padding: 28px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .page h2 { font-size: 21px; margin-bottom: 4px; }
+  .step-label { color: var(--orange); font-weight: 700; font-size: 14px; margin-bottom: 2px; font-family: 'Baloo 2', sans-serif; }
+  .step-desc { color: var(--ink-soft); font-size: 14px; margin: 6px 0 18px; }
+
+  .dropzone {
+    border: 3px solid var(--blue);
+    border-radius: 14px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #F3F7FC;
+    transition: background 0.15s ease;
+  }
+  .dropzone:hover, .dropzone.drag { background: #E7F0FA; }
+  .dropzone svg { width: 46px; height: 46px; margin-bottom: 10px; }
+  .dropzone p { margin: 0; font-weight: 700; color: var(--blue-dark); font-family: 'Baloo 2', sans-serif; font-size: 16px; }
+  .dropzone span { color: var(--ink-soft); font-size: 13px; }
+  input[type=file] { display: none; }
+
+  .previews { display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
+  .preview-box { flex: 1; min-width: 200px; text-align: center; }
+  .preview-box canvas, .preview-box img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  .preview-box p { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
+
+  .themes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .theme-pill {
+    border: 2px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-family: 'Karla', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .theme-pill.active { border-color: var(--orange); color: var(--orange); background: #FDF0EA; }
+
+  label.field { display: block; margin-bottom: 16px; }
+  label.field span { display: block; font-weight: 700; font-size: 14px; margin-bottom: 6px; font-family: 'Baloo 2', sans-serif; }
+  input[type=text], input[type=email], textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    font-family: 'Karla', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: #fff;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--blue); }
+  textarea { resize: vertical; min-height: 60px; }
+  .error-text { color: var(--danger); font-size: 13px; margin-top: 4px; display: none; }
+
+  .submit-btn {
+    width: 100%;
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { background: #D8CFC0; cursor: not-allowed; }
+
+  .confirm {
+    display: none;
+    background: #EDF6EE;
+    border: 2px solid var(--green);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .confirm h3 { color: var(--green); font-size: 19px; }
+  .confirm p { color: var(--ink-soft); font-size: 14px; margin: 6px 0 0; }
+
+  .note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: #FBF3DD;
+    border: 1px solid var(--yellow);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 16px;
+  }
+
+  .admin-toggle {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .admin-toggle button {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: 'Karla', sans-serif;
+  }
+  #adminPanel { display: none; }
+  .order-row {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .order-row img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; }
+  .order-row .meta { font-size: 13px; }
+  .order-row .meta b { font-family: 'Baloo 2', sans-serif; font-size: 14px; }
+  .empty { color: var(--ink-soft); font-size: 14px; text-align: center; padding: 10px; }
+
+  .story-page {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #fff;
+    aspect-ratio: 1;
+  }
+  .story-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .story-page .num {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: var(--orange);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-family: 'Baloo 2', sans-serif;
+  }
+  .story-page.pending { display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 12px; background: #F3F1E9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">Storybook You</div>
+    <div class="tagline">Turn your kid's photo into a coloring book starring them</div>
+  </header>
+
+  <div class="page">
+    <div class="step-label">Step 1</div>
+    <h2>Upload a photo</h2>
+    <p class="step-desc">Front-facing photos with good lighting work best.</p>
+    <div class="dropzone" id="dropzone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2F5FA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <p>Drop a photo here, or tap to choose one</p>
+      <span>JPG or PNG</span>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="error-text" id="fileError">Choose a photo to continue.</div>
+
+    <div class="previews" id="previews" style="display:none;">
+      <div class="preview-box">
+        <img id="origPreview" alt="Original photo">
+        <p>Original</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">How many children are in this photo?</span>
+      <div class="themes" id="childCountPicker">
+        <button type="button" class="theme-pill active" data-count="1">Just 1</button>
+        <button type="button" class="theme-pill" data-count="2">2 kids</button>
+        <button type="button" class="theme-pill" data-count="3">3 kids</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="step-label">Step 2</div>
+    <h2>Pick a style</h2>
+    <p class="step-desc">This decides how your kid's page is drawn.</p>
+    <div class="themes" id="themes">
+      <button type="button" class="theme-pill active" data-theme="Portrait">Simple portrait</button>
+      <button type="button" class="theme-pill" data-theme="Adventure scene">Adventure scene</button>
+      <button type="button" class="theme-pill" data-theme="Superhero">Superhero</button>
+      <button type="button" class="theme-pill" data-theme="Fairy tale">Fairy tale</button>
+    </div>
+    <button type="button" class="submit-btn" id="generateBtn" style="margin-top:18px;">Generate the full story book</button>
+    <div class="error-text" id="generateError">Upload a photo first.</div>
+    <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
+    <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+  </div>
+
+  <div class="page">
+    <div class="step-label">Step 3</div>
+    <h2>Your details</h2>
+    <p class="step-desc" style="margin-top:14px;"></p>
+    <label class="field">
+      <span id="childNameLabel">Child's name</span>
+      <input type="text" id="childName" placeholder="Ava">
+      <div class="error-text" id="childNameError">Enter the child's name.</div>
+    </label>
+    <label class="field">
+      <span>Your email</span>
+      <input type="email" id="parentEmail" placeholder="name@email.com">
+      <div class="error-text" id="emailError">Enter a valid email.</div>
+    </label>
+    <label class="field">
+      <span>Anything else? (optional)</span>
+      <textarea id="notes" placeholder="Favorite animal, colors, anything you want in the book"></textarea>
+    </label>
+
+    <button class="submit-btn" id="submitBtn">Start my coloring book</button>
+
+    <div class="confirm" id="confirm">
+      <h3>Order started</h3>
+      <p id="confirmText"></p>
+    </div>
+
+    <div class="note">Orders are saved to this artifact's storage so a business could review them. Printing and payment still aren't connected yet — this only handles the photo-to-coloring-page step for real.</div>
+  </div>
+
+  <div class="admin-toggle">
+    <button id="adminToggleBtn" type="button">Business view: see submitted orders</button>
+  </div>
+  <div class="page" id="adminPanel">
+    <h2 style="font-size:18px;">Submitted orders</h2>
+    <div id="orderList"></div>
+  </div>
+
+</div>
+
+<script>
+const BACKEND_URL = 'https://coloring-book-backend.onrender.com';
+
+let selectedFile = null;
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const previews = document.getElementById('previews');
+const origPreview = document.getElementById('origPreview');
+const fileError = document.getElementById('fileError');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  fileError.style.display = 'none';
+  selectedFile = file;
+  storyPages = [];
+  document.getElementById('storyGrid').style.display = 'none';
+  document.getElementById('storyGrid').innerHTML = '';
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    previews.style.display = 'flex';
+    origPreview.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+let selectedTheme = 'Portrait';
+document.querySelectorAll('#themes .theme-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedTheme = btn.dataset.theme;
+  });
+});
+
+let childCount = 1;
+const childNameLabel = document.getElementById('childNameLabel');
+const childNameInput = document.getElementById('childName');
+document.querySelectorAll('#childCountPicker .theme-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#childCountPicker .theme-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    childCount = parseInt(btn.dataset.count, 10);
+    if (childCount > 1) {
+      childNameLabel.textContent = "Children's names";
+      childNameInput.placeholder = 'Ava and Milo';
+    } else {
+      childNameLabel.textContent = "Child's name";
+      childNameInput.placeholder = 'Ava';
+    }
+  });
+});
+
+const generateBtn = document.getElementById('generateBtn');
+const generateError = document.getElementById('generateError');
+const generateStatus = document.getElementById('generateStatus');
+const storyGrid = document.getElementById('storyGrid');
+
+let storyPages = [];
+
+generateBtn.addEventListener('click', async () => {
+  generateError.style.display = 'none';
+  if (!selectedFile) {
+    generateError.textContent = 'Upload a photo first.';
+    generateError.style.display = 'block';
+    return;
+  }
+
+  generateBtn.disabled = true;
+  storyPages = [];
+  storyGrid.style.display = 'grid';
+  storyGrid.innerHTML = '';
+
+  let sceneCount = 15;
+  try {
+    const lenRes = await fetch(BACKEND_URL + '/story-length?theme=' + encodeURIComponent(selectedTheme));
+    const lenData = await lenRes.json();
+    if (lenData && lenData.sceneCount) sceneCount = lenData.sceneCount;
+  } catch (e) {}
+
+  for (let i = 0; i < sceneCount; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'story-page pending';
+    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>...';
+    storyGrid.appendChild(cell);
+  }
+
+  let failures = 0;
+  for (let i = 0; i < sceneCount; i++) {
+    generateStatus.style.display = 'block';
+    generateStatus.textContent = 'Drawing page ' + (i + 1) + ' of ' + sceneCount + (i === 0 ? ' — first page can take up to a minute while the server wakes up' : '') + '...';
+
+    const cell = storyGrid.children[i];
+    try {
+      const form = new FormData();
+      form.append('photo', selectedFile);
+      form.append('theme', selectedTheme);
+      form.append('sceneIndex', i);
+      form.append('childCount', childCount);
+
+      const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error((data && data.detail) || (data && data.error) || 'Conversion failed.');
+
+      storyPages[i] = data.image;
+      cell.classList.remove('pending');
+      cell.innerHTML = '<span class="num">' + (i + 1) + '</span><img src="' + data.image + '" alt="Page ' + (i + 1) + '">';
+    } catch (err) {
+      failures++;
+      cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
+    }
+  }
+
+  generateStatus.style.display = 'none';
+  generateBtn.disabled = false;
+
+  if (failures > 0) {
+    generateError.textContent = failures + ' of ' + sceneCount + ' pages failed to generate — you can try again, the server may have been overloaded.';
+    generateError.style.display = 'block';
+  }
+});
+
+function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  let ok = true;
+  document.getElementById('fileError').style.display = 'none';
+  document.getElementById('childNameError').style.display = 'none';
+  document.getElementById('emailError').style.display = 'none';
+
+  const finishedPages = storyPages.filter(Boolean).length;
+  if (finishedPages === 0) {
+    generateError.textContent = 'Generate the story book in step 2 before ordering.';
+    generateError.style.display = 'block';
+    ok = false;
+  }
+  const childName = document.getElementById('childName').value.trim();
+  if (!childName) { document.getElementById('childNameError').style.display = 'block'; ok = false; }
+  const email = document.getElementById('parentEmail').value.trim();
+  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
+  if (!ok) return;
+
+  const order = {
+    childName,
+    childCount,
+    email,
+    theme: selectedTheme,
+    notes: document.getElementById('notes').value.trim(),
+    thumb: storyPages.find(Boolean),
+    pageCount: finishedPages,
+    submittedAt: new Date().toISOString()
+  };
+
+  const key = 'orders:' + Date.now();
+  try {
+    const result = await window.storage.set(key, JSON.stringify(order), true);
+    if (!result) throw new Error('save failed');
+    document.getElementById('confirm').style.display = 'block';
+    document.getElementById('confirmText').textContent =
+      "We've saved " + childName + "'s " + selectedTheme.toLowerCase() + " story (" + finishedPages + " pages). A confirmation would normally go to " + email + ".";
+    document.getElementById('submitBtn').disabled = true;
+  } catch (err) {
+    document.getElementById('confirm').style.display = 'block';
+    document.getElementById('confirm').style.borderColor = '#C1432B';
+    document.getElementById('confirmText').textContent = "Couldn't save this order right now. Try again.";
+  }
+});
+
+const adminPanel = document.getElementById('adminPanel');
+const adminToggleBtn = document.getElementById('adminToggleBtn');
+adminToggleBtn.addEventListener('click', async () => {
+  const showing = adminPanel.style.display === 'block';
+  if (showing) {
+    adminPanel.style.display = 'none';
+    adminToggleBtn.textContent = 'Business view: see submitted orders';
+    return;
+  }
+  adminPanel.style.display = 'block';
+  adminToggleBtn.textContent = 'Hide business view';
+  await loadOrders();
+});
+
+async function loadOrders() {
+  const listEl = document.getElementById('orderList');
+  listEl.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const listing = await window.storage.list('orders:', true);
+    if (!listing || !listing.keys || listing.keys.length === 0) {
+      listEl.innerHTML = '<div class="empty">No orders submitted yet.</div>';
+      return;
+    }
+    const orders = [];
+    for (const key of listing.keys) {
+      try {
+        const res = await window.storage.get(key, true);
+        if (res) orders.push(JSON.parse(res.value));
+      } catch (e) {}
+    }
+    orders.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    listEl.innerHTML = '';
+    orders.forEach(o => {
+      const row = document.createElement('div');
+      row.className = 'order-row';
+      row.innerHTML =
+        '<img src="' + o.thumb + '" alt="">' +
+        '<div class="meta"><b>' + o.childName + '</b> — ' + o.theme + (o.childCount > 1 ? ' (' + o.childCount + ' kids)' : '') + '<br>' +
+        o.email + '<br>' +
+        (o.notes ? o.notes + '<br>' : '') +
+        new Date(o.submittedAt).toLocaleString() + '</div>';
+      listEl.appendChild(row);
+    });
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">Couldn\'t load orders.</div>';
+  }
+}
+</script>
+</body>
+</html>
