@@ -184,6 +184,15 @@
     font-family: 'Baloo 2', sans-serif;
   }
   .story-page.pending { display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 12px; background: #F3F1E9; }
+  .career-pill { display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+  .career-pill select {
+    border:0; background:transparent; font:inherit; color:inherit;
+    font-weight:700; cursor:pointer; padding:0 2px; outline:none;
+    max-width:150px;
+  }
+  .career-pill select:focus-visible { outline:2px solid var(--blue); outline-offset:2px; border-radius:4px; }
+  .career-pill.active select { color:#fff; }
+  .career-pill.active select option { color:var(--ink); }
 </style>
 </head>
 <body>
@@ -240,6 +249,14 @@
       <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
       <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
       <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
+      <span class="theme-pill career-pill" id="careerPill" data-audience="kid">
+        <span class="career-label">When I grow up</span>
+        <select id="careerSelect" aria-label="Pick a career">
+          <option value="Firefighter">Firefighter</option>
+          <option value="Police Officer">Police officer</option>
+          <option value="Doctor">Doctor</option>
+        </select>
+      </span>
       <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
       <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
     </div>
@@ -387,12 +404,34 @@ function resetBook() {
 }
 
 let selectedTheme = 'Portrait';
+const careerPill = document.getElementById('careerPill');
+const careerSelect = document.getElementById('careerSelect');
+
+function activatePill(el) {
+  document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
 document.querySelectorAll('#themes .theme-pill').forEach(btn => {
+  if (btn === careerPill) return;   // the career pill has its own handler
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    activatePill(btn);
     selectedTheme = btn.dataset.theme;
   });
+});
+
+// The career pill IS the dropdown. Clicking anywhere on it opens the list;
+// picking an option both selects the career and makes it the active style.
+careerPill.addEventListener('click', (e) => {
+  activatePill(careerPill);
+  selectedTheme = careerSelect.value;
+  if (e.target !== careerSelect && typeof careerSelect.showPicker === 'function') {
+    try { careerSelect.showPicker(); } catch (err) { careerSelect.focus(); }
+  }
+});
+careerSelect.addEventListener('change', () => {
+  activatePill(careerPill);
+  selectedTheme = careerSelect.value;
 });
 
 let audience = 'kid';
@@ -419,7 +458,7 @@ document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
 
     document.querySelectorAll('#themes .theme-pill').forEach(pill => {
       const matches = pill.dataset.audience === 'both' || pill.dataset.audience === audience;
-      pill.style.display = matches ? 'inline-block' : 'none';
+      pill.style.display = matches ? (pill.classList.contains('career-pill') ? 'inline-flex' : 'inline-block') : 'none';
     });
     const activeThemePill = document.querySelector('#themes .theme-pill.active');
     if (!activeThemePill || activeThemePill.style.display === 'none') {
@@ -760,10 +799,65 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   doc.save(childName.replace(/[^a-z0-9]/gi, '-') + '-coloring-book.pdf');
 });
 
-// On load: did we just come back from Stripe?
+// Opening the link we emailed: ?order=N#t=TOKEN
+// The token sits in the fragment so it never reaches a server log.
+async function openFromLink(id, token) {
+  orderId = id;
+  accessToken = token;
+  const confirmBox = document.getElementById('confirm');
+  const confirmText = document.getElementById('confirmText');
+  confirmBox.style.display = 'block';
+  document.getElementById('confirmTitle').textContent = 'Opening your book';
+  confirmText.textContent = 'One moment...';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/orders/' + id + '/access?token=' + encodeURIComponent(token));
+    if (!r.ok) throw new Error('That link is not valid any more.');
+    const acc = await r.json();
+    if (!acc.paid) throw new Error('This order has not been paid for yet.');
+
+    selectedTheme = acc.theme || 'Portrait';
+    document.getElementById('childName').value = acc.childName || '';
+    sceneCount = acc.pageCount || 15;
+
+    const pr = await fetch(BACKEND_URL + '/orders/' + id + '/pages?token=' + encodeURIComponent(token));
+    const pd = await pr.json();
+    const pages = pd.pages || [];
+    if (!pages.length) throw new Error('No finished pages are saved for this order yet.');
+
+    paintGrid(Math.max(sceneCount, pages.length));
+    pages.forEach(p => {
+      storyPages[p.sceneIndex] = p.image;
+      const cell = storyGrid.children[p.sceneIndex];
+      if (cell) {
+        cell.classList.remove('pending');
+        cell.innerHTML = '<span class="num">' + (p.sceneIndex + 1) + '</span><img src="' + p.image + '" alt="Page ' + (p.sceneIndex + 1) + '">';
+      }
+    });
+
+    // Save the credential so a later visit works even without the link.
+    saveState();
+    document.getElementById('confirmTitle').textContent = 'Your book';
+    confirmText.textContent = pages.length + ' pages are ready to download.';
+    document.getElementById('downloadBtn').style.display = 'inline-block';
+  } catch (err) {
+    document.getElementById('confirmTitle').textContent = 'Could not open that link';
+    confirmText.textContent = err.message;
+  }
+}
+
+// On load: did we just come back from Stripe, or open an emailed link?
 (function () {
   const params = new URLSearchParams(location.search);
-  if (params.get('paid') === '1' && params.get('order')) {
+  const hash = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const linkToken = hash.get('t');
+
+  if (params.get('order') && linkToken) {
+    // Strip the credential out of the address bar so it isn't left on screen
+    // or copied into a shared URL by accident.
+    history.replaceState(null, '', location.pathname + '?order=' + params.get('order'));
+    openFromLink(params.get('order'), linkToken);
+  } else if (params.get('paid') === '1' && params.get('order')) {
     resumeAfterPayment(params.get('order'));
   } else if (params.get('canceled') === '1') {
     const st = loadState();
