@@ -243,20 +243,8 @@
       <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
       <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
     </div>
-    <div style="display:flex; gap:10px; margin-top:18px;">
-      <button type="button" class="submit-btn" id="generateBtn" style="margin-top:0;">Generate the full story book</button>
-      <button type="button" class="submit-btn" id="stopBtn" style="margin-top:0; display:none; background:#fff; color:var(--danger); border:2px solid var(--danger);">Stop</button>
-    </div>
-    <div class="error-text" id="generateError">Upload a photo first.</div>
-    <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
-    <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
-  </div>
 
-  <div class="page">
-    <div class="step-label">Step 3</div>
-    <h2>Your details</h2>
-    <p class="step-desc" style="margin-top:14px;"></p>
-    <label class="field">
+    <label class="field" style="margin-top:18px;">
       <span id="childNameLabel">Child's name</span>
       <input type="text" id="childName" placeholder="Ava">
       <div class="error-text" id="childNameError">Enter the child's name.</div>
@@ -271,15 +259,40 @@
       <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
     </label>
 
-    <button class="submit-btn" id="submitBtn">Start my coloring book</button>
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button type="button" class="submit-btn" id="previewBtn" style="margin-top:0;">See my free preview</button>
+      <button type="button" class="submit-btn" id="stopBtn" style="margin-top:0; display:none; background:#fff; color:var(--danger); border:2px solid var(--danger);">Stop</button>
+    </div>
+    <div class="error-text" id="generateError">Upload a photo first.</div>
+    <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
+  </div>
+
+  <div class="page">
+    <div class="step-label">Step 3</div>
+    <h2>Your book</h2>
+    <p class="step-desc">Your free preview pages appear here. Like what you see? Unlock the rest.</p>
+
+    <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+
+    <div id="paywall" style="display:none; margin-top:20px; border:2px solid #2F5FA8; border-radius:14px; padding:18px; text-align:center;">
+      <h3 style="margin:0 0 6px; font-family:'Baloo 2', sans-serif;">Unlock the full book</h3>
+      <p style="margin:0 0 4px; color:var(--ink-soft); font-size:14px;">
+        You have seen <span id="previewCountText">2</span> pages free. Unlock all <span id="totalCountText">15</span>
+        and download the whole book as a print-ready PDF.
+      </p>
+      <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;">$19</p>
+      <button type="button" class="submit-btn" id="unlockBtn" style="margin-top:0;">Unlock all pages</button>
+      <div class="error-text" id="payError">Could not start checkout.</div>
+      <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">Secure checkout by Stripe. Card details never touch our server.</p>
+    </div>
 
     <div class="confirm" id="confirm">
-      <h3>Order started</h3>
+      <h3 id="confirmTitle">Order started</h3>
       <p id="confirmText"></p>
       <button type="button" class="submit-btn" id="downloadBtn" style="margin-top:14px; display:none;">Download the book (PDF)</button>
     </div>
 
-    <div class="note">Orders are saved on the server now. Note: they're currently stored in memory, so they'll be lost if the server restarts or redeploys — a real database is the next upgrade. A physical mailed copy isn't connected yet — for now this is a digital download. Payment still isn't connected either.</div>
+    <div class="note">Your pages are saved to your order, so you can close this page and download the book again later.</div>
   </div>
 
   <div class="admin-toggle">
@@ -295,7 +308,8 @@
 <script>
 const BACKEND_URL = 'https://coloring-book-backend.onrender.com';
 
-let selectedFile = null;
+let selectedFile = null;      // downscaled JPEG blob sent to the backend
+let photoDataUrl = null;      // same image as a data URL, so it survives the Stripe redirect
 
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
@@ -315,23 +329,61 @@ fileInput.addEventListener('change', e => {
   if (e.target.files.length) handleFile(e.target.files[0]);
 });
 
-function handleFile(file) {
+// Shrink the photo before anything else. Phone photos are 3-8MB, which makes
+// uploads slow and blows the storage budget we need to survive the redirect to
+// Stripe. 1024px is plenty for line art.
+function downscale(file, maxDim = 1024) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        canvas.toBlob(blob => resolve({ blob, dataUrl }), 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFile(file) {
   if (!file.type.startsWith('image/')) return;
   fileError.style.display = 'none';
-  selectedFile = file;
+  try {
+    const { blob, dataUrl } = await downscale(file);
+    selectedFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    photoDataUrl = dataUrl;
+    previews.style.display = 'flex';
+    origPreview.src = dataUrl;
+  } catch (e) {
+    fileError.textContent = "That image could not be read. Try a different photo.";
+    fileError.style.display = 'block';
+  }
+  resetBook();
+}
+
+function resetBook() {
   storyPages = [];
   cancelRequested = true;
   if (currentAbortController) currentAbortController.abort();
-  document.getElementById('storyGrid').style.display = 'none';
-  document.getElementById('storyGrid').innerHTML = '';
+  storyGrid.style.display = 'none';
+  storyGrid.innerHTML = '';
+  document.getElementById('paywall').style.display = 'none';
+  document.getElementById('confirm').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
-
-  const reader = new FileReader();
-  reader.onload = evt => {
-    previews.style.display = 'flex';
-    origPreview.src = evt.target.result;
-  };
-  reader.readAsDataURL(file);
 }
 
 let selectedTheme = 'Portrait';
@@ -353,14 +405,10 @@ document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
 
     const countLabel = document.getElementById('countLabel');
     const themeStepDesc = document.getElementById('themeStepDesc');
-    document.querySelectorAll('#childCountPicker .theme-pill').forEach((pill, idx) => {
-      const n = idx + 1;
-      pill.textContent = n === 1 ? 'Just 1' : String(n);
-    });
     if (audience === 'adult') {
       countLabel.textContent = 'How many people are in this photo?';
-      themeStepDesc.textContent = "This decides how their page is drawn.";
-      document.getElementById('childNameLabel').textContent = "Their name";
+      themeStepDesc.textContent = 'This decides how their page is drawn.';
+      document.getElementById('childNameLabel').textContent = 'Their name';
       document.getElementById('childName').placeholder = 'Grandma Rose';
     } else {
       countLabel.textContent = 'How many kids are in this photo?';
@@ -382,6 +430,7 @@ document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
     }
   });
 });
+
 const childNameLabel = document.getElementById('childNameLabel');
 const childNameInput = document.getElementById('childName');
 document.querySelectorAll('#childCountPicker .theme-pill').forEach(btn => {
@@ -389,25 +438,130 @@ document.querySelectorAll('#childCountPicker .theme-pill').forEach(btn => {
     document.querySelectorAll('#childCountPicker .theme-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     childCount = parseInt(btn.dataset.count, 10);
-    if (childCount > 1) {
-      childNameLabel.textContent = "Children's names";
-      childNameInput.placeholder = 'Ava and Milo';
-    } else {
-      childNameLabel.textContent = "Child's name";
-      childNameInput.placeholder = 'Ava';
+    if (audience === 'kid') {
+      childNameLabel.textContent = childCount > 1 ? "Children's names" : "Child's name";
+      childNameInput.placeholder = childCount > 1 ? 'Ava and Milo' : 'Ava';
     }
   });
 });
 
-const generateBtn = document.getElementById('generateBtn');
+const previewBtn = document.getElementById('previewBtn');
 const stopBtn = document.getElementById('stopBtn');
 const generateError = document.getElementById('generateError');
 const generateStatus = document.getElementById('generateStatus');
 const storyGrid = document.getElementById('storyGrid');
+const paywall = document.getElementById('paywall');
 
 let storyPages = [];
 let cancelRequested = false;
 let currentAbortController = null;
+let sceneCount = 15;
+let freePreviewPages = 2;
+
+// --- order identity -------------------------------------------------------
+// The backend hands us an access token once, when the order is created. It is
+// what proves this browser owns the order, so it has to survive the round trip
+// to Stripe and back.
+const STATE_KEY = 'storybookyou_order_v1';
+let orderId = null;
+let accessToken = null;
+
+function saveState() {
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify({
+      orderId, accessToken, photoDataUrl, selectedTheme, childCount, audience,
+      notes: document.getElementById('notes').value.trim(),
+      childName: document.getElementById('childName').value.trim(),
+      email: document.getElementById('parentEmail').value.trim()
+    }));
+  } catch (e) { /* private mode or full quota - not fatal before payment */ }
+}
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch (e) { return null; }
+}
+
+function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+function dataUrlToFile(dataUrl) {
+  const parts = dataUrl.split(',');
+  const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const bin = atob(parts[1]);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new File([arr], 'photo.jpg', { type: mime });
+}
+
+async function fetchSceneCount(theme) {
+  try {
+    const r = await fetch(BACKEND_URL + '/story-length?theme=' + encodeURIComponent(theme));
+    const d = await r.json();
+    if (d && d.sceneCount) return d.sceneCount;
+  } catch (e) {}
+  return 15;
+}
+
+function paintGrid(total) {
+  storyGrid.style.display = 'grid';
+  storyGrid.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'story-page pending';
+    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (i < freePreviewPages ? '...' : 'locked');
+    storyGrid.appendChild(cell);
+  }
+}
+
+// Generates scenes [from, to). Passes the order credentials so the backend can
+// tell a paid request from a free preview.
+async function generateRange(from, to, file, opts) {
+  let failures = 0;
+  cancelRequested = false;
+  stopBtn.style.display = 'inline-block';
+  stopBtn.disabled = false;
+  stopBtn.textContent = 'Stop';
+
+  for (let i = from; i < to; i++) {
+    if (cancelRequested) break;
+    if (storyPages[i]) continue;
+
+    generateStatus.style.display = 'block';
+    generateStatus.textContent = 'Drawing page ' + (i + 1) + ' of ' + to +
+      (i === from ? ' - the first page can take up to a minute while the server wakes up' : '') + '...';
+
+    const cell = storyGrid.children[i];
+    currentAbortController = new AbortController();
+    try {
+      const form = new FormData();
+      form.append('photo', file);
+      form.append('theme', opts.theme);
+      form.append('sceneIndex', i);
+      form.append('childCount', opts.childCount);
+      form.append('subjectType', opts.audience);
+      form.append('notes', opts.notes || '');
+      if (orderId) form.append('orderId', orderId);
+      if (accessToken) form.append('token', accessToken);
+
+      const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: currentAbortController.signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error((data && data.detail) || (data && data.error) || 'Conversion failed.');
+
+      storyPages[i] = data.image;
+      if (cell) {
+        cell.classList.remove('pending');
+        cell.innerHTML = '<span class="num">' + (i + 1) + '</span><img src="' + data.image + '" alt="Page ' + (i + 1) + '">';
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') { if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>stopped'; break; }
+      failures++;
+      if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
+    }
+  }
+
+  generateStatus.style.display = 'none';
+  stopBtn.style.display = 'none';
+  currentAbortController = null;
+  return failures;
+}
 
 stopBtn.addEventListener('click', () => {
   cancelRequested = true;
@@ -416,103 +570,15 @@ stopBtn.addEventListener('click', () => {
   stopBtn.textContent = 'Stopping...';
 });
 
-generateBtn.addEventListener('click', async () => {
+// Step 2 button: create the order, then draw the free preview pages.
+previewBtn.addEventListener('click', async () => {
   generateError.style.display = 'none';
-  if (!selectedFile) {
-    generateError.textContent = 'Upload a photo first.';
-    generateError.style.display = 'block';
-    return;
-  }
-
-  generateBtn.disabled = true;
-  stopBtn.style.display = 'inline-block';
-  stopBtn.disabled = false;
-  stopBtn.textContent = 'Stop';
-  cancelRequested = false;
-  storyPages = [];
-  storyGrid.style.display = 'grid';
-  storyGrid.innerHTML = '';
-
-  let sceneCount = 15;
-  try {
-    const lenRes = await fetch(BACKEND_URL + '/story-length?theme=' + encodeURIComponent(selectedTheme));
-    const lenData = await lenRes.json();
-    if (lenData && lenData.sceneCount) sceneCount = lenData.sceneCount;
-  } catch (e) {}
-
-  for (let i = 0; i < sceneCount; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'story-page pending';
-    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>...';
-    storyGrid.appendChild(cell);
-  }
-
-  let failures = 0;
-  let stoppedEarly = false;
-  for (let i = 0; i < sceneCount; i++) {
-    if (cancelRequested) { stoppedEarly = true; break; }
-
-    generateStatus.style.display = 'block';
-    generateStatus.textContent = 'Drawing page ' + (i + 1) + ' of ' + sceneCount + (i === 0 ? ' — first page can take up to a minute while the server wakes up' : '') + '...';
-
-    const cell = storyGrid.children[i];
-    currentAbortController = new AbortController();
-    try {
-      const form = new FormData();
-      form.append('photo', selectedFile);
-      form.append('theme', selectedTheme);
-      form.append('sceneIndex', i);
-      form.append('childCount', childCount);
-      form.append('subjectType', audience);
-      form.append('notes', document.getElementById('notes').value.trim());
-
-      const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: currentAbortController.signal });
-      const data = await response.json();
-
-      if (!response.ok) throw new Error((data && data.detail) || (data && data.error) || 'Conversion failed.');
-
-      storyPages[i] = data.image;
-      cell.classList.remove('pending');
-      cell.innerHTML = '<span class="num">' + (i + 1) + '</span><img src="' + data.image + '" alt="Page ' + (i + 1) + '">';
-    } catch (err) {
-      if (err.name === 'AbortError') { stoppedEarly = true; cell.innerHTML = '<span class="num">' + (i + 1) + '</span>stopped'; break; }
-      failures++;
-      cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
-    }
-  }
-
-  for (let j = storyGrid.children.length - 1; j >= 0; j--) {
-    const cell = storyGrid.children[j];
-    if (cell.classList.contains('pending') && cell.textContent.trim().endsWith('...')) {
-      cell.innerHTML = cell.querySelector('.num').outerHTML + 'skipped';
-    }
-  }
-
-  generateStatus.style.display = 'none';
-  generateBtn.disabled = false;
-  stopBtn.style.display = 'none';
-  currentAbortController = null;
-
-  if (stoppedEarly) {
-    generateError.textContent = 'Stopped — ' + storyPages.filter(Boolean).length + ' of ' + sceneCount + ' pages were generated before you stopped it.';
-    generateError.style.display = 'block';
-  } else if (failures > 0) {
-    generateError.textContent = failures + ' of ' + sceneCount + ' pages failed to generate — you can try again, the server may have been overloaded.';
-    generateError.style.display = 'block';
-  }
-});
-
-function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-
-document.getElementById('submitBtn').addEventListener('click', async () => {
-  let ok = true;
-  document.getElementById('fileError').style.display = 'none';
   document.getElementById('childNameError').style.display = 'none';
   document.getElementById('emailError').style.display = 'none';
 
-  const finishedPages = storyPages.filter(Boolean).length;
-  if (finishedPages === 0) {
-    generateError.textContent = 'Generate the story book in step 2 before ordering.';
+  let ok = true;
+  if (!selectedFile) {
+    generateError.textContent = 'Upload a photo first.';
     generateError.style.display = 'block';
     ok = false;
   }
@@ -522,37 +588,158 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
   if (!ok) return;
 
-  const order = {
-    childName,
-    childCount,
-    email,
-    theme: selectedTheme,
-    notes: document.getElementById('notes').value.trim(),
-    thumb: storyPages.find(Boolean),
-    pageCount: finishedPages
-  };
+  previewBtn.disabled = true;
+  storyPages = [];
+  paywall.style.display = 'none';
+  document.getElementById('confirm').style.display = 'none';
 
   try {
-    const response = await fetch(BACKEND_URL + '/orders', {
+    sceneCount = await fetchSceneCount(selectedTheme);
+    paintGrid(sceneCount);
+
+    const res = await fetch(BACKEND_URL + '/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
+      body: JSON.stringify({
+        childName: childName, childCount: childCount, email: email,
+        theme: selectedTheme,
+        notes: document.getElementById('notes').value.trim(),
+        thumb: null,
+        pageCount: sceneCount
+      })
     });
-    if (!response.ok) throw new Error('save failed');
-    document.getElementById('confirm').style.display = 'block';
-    document.getElementById('confirmText').textContent =
-      "We've saved " + childName + "'s " + selectedTheme.toLowerCase() + " story (" + finishedPages + " pages). A confirmation would normally go to " + email + ".";
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('downloadBtn').style.display = 'inline-block';
+    const data = await res.json();
+    if (!res.ok || !data.accessToken) throw new Error('Could not start your order.');
+    orderId = data.order.id;
+    accessToken = data.accessToken;
+    saveState();
+
+    await generateRange(0, freePreviewPages, selectedFile, {
+      theme: selectedTheme, childCount: childCount, audience: audience,
+      notes: document.getElementById('notes').value.trim()
+    });
+
+    if (storyPages.filter(Boolean).length === 0) {
+      generateError.textContent = 'The preview pages could not be drawn. Try again in a moment.';
+      generateError.style.display = 'block';
+    } else {
+      document.getElementById('previewCountText').textContent = freePreviewPages;
+      document.getElementById('totalCountText').textContent = sceneCount;
+      paywall.style.display = 'block';
+      paywall.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   } catch (err) {
-    document.getElementById('confirm').style.display = 'block';
-    document.getElementById('confirm').style.borderColor = '#C1432B';
-    document.getElementById('confirmText').textContent = "Couldn't save this order right now. Try again.";
+    generateError.textContent = err.message || 'Something went wrong. Try again.';
+    generateError.style.display = 'block';
+  }
+  previewBtn.disabled = false;
+});
+
+// Paywall button: hand off to Stripe.
+document.getElementById('unlockBtn').addEventListener('click', async () => {
+  const payError = document.getElementById('payError');
+  payError.style.display = 'none';
+  const btn = document.getElementById('unlockBtn');
+  btn.disabled = true;
+  btn.textContent = 'Taking you to checkout...';
+  try {
+    saveState();
+    const r = await fetch(BACKEND_URL + '/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital' })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.url) throw new Error(d.detail || d.error || 'Checkout could not be started.');
+    window.location.href = d.url;
+  } catch (err) {
+    payError.textContent = err.message;
+    payError.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Unlock all pages';
   }
 });
 
+// Coming back from Stripe.
+async function resumeAfterPayment(returnedId) {
+  const st = loadState();
+  const confirmBox = document.getElementById('confirm');
+  const confirmText = document.getElementById('confirmText');
+  confirmBox.style.display = 'block';
+
+  if (!st || String(st.orderId) !== String(returnedId) || !st.accessToken) {
+    document.getElementById('confirmTitle').textContent = 'We need this browser';
+    confirmText.textContent = "Your payment went through, but this browser doesn't have the key to your order - it was started somewhere else, or the browser data was cleared. Reply to your receipt and we'll send your book.";
+    return;
+  }
+
+  orderId = st.orderId;
+  accessToken = st.accessToken;
+  photoDataUrl = st.photoDataUrl;
+  selectedTheme = st.selectedTheme || 'Portrait';
+  childCount = st.childCount || 1;
+  audience = st.audience || 'kid';
+
+  document.getElementById('childName').value = st.childName || '';
+  document.getElementById('parentEmail').value = st.email || '';
+  document.getElementById('notes').value = st.notes || '';
+
+  document.getElementById('confirmTitle').textContent = 'Payment received';
+  confirmText.textContent = 'Thanks! Drawing the rest of ' + (st.childName || 'your') + "'s book now. This takes a few minutes - keep this page open.";
+
+  // The webhook usually lands within a second or two, but don't assume it.
+  let paid = false;
+  for (let attempt = 0; attempt < 10 && !paid; attempt++) {
+    try {
+      const r = await fetch(BACKEND_URL + '/orders/' + orderId + '/access?token=' + encodeURIComponent(accessToken));
+      const d = await r.json();
+      if (d.paid) { paid = true; if (d.freePreviewPages) freePreviewPages = d.freePreviewPages; break; }
+    } catch (e) {}
+    await new Promise(res => setTimeout(res, 2000));
+  }
+  if (!paid) {
+    confirmText.textContent = "Your payment is still being confirmed. Give it a minute and refresh this page - you won't be charged twice.";
+    return;
+  }
+
+  sceneCount = await fetchSceneCount(selectedTheme);
+  paintGrid(sceneCount);
+
+  // Anything already drawn and stored for this order comes back for free.
+  try {
+    const r = await fetch(BACKEND_URL + '/orders/' + orderId + '/pages?token=' + encodeURIComponent(accessToken));
+    const d = await r.json();
+    (d.pages || []).forEach(p => {
+      storyPages[p.sceneIndex] = p.image;
+      const cell = storyGrid.children[p.sceneIndex];
+      if (cell) {
+        cell.classList.remove('pending');
+        cell.innerHTML = '<span class="num">' + (p.sceneIndex + 1) + '</span><img src="' + p.image + '" alt="Page ' + (p.sceneIndex + 1) + '">';
+      }
+    });
+  } catch (e) {}
+
+  if (!photoDataUrl) {
+    confirmText.textContent = "Your payment went through, but the photo isn't in this browser any more. Reply to your receipt and we'll finish the book for you.";
+    return;
+  }
+
+  const file = dataUrlToFile(photoDataUrl);
+  const failures = await generateRange(0, sceneCount, file, {
+    theme: selectedTheme, childCount: childCount, audience: audience,
+    notes: document.getElementById('notes').value.trim()
+  });
+
+  const done = storyPages.filter(Boolean).length;
+  document.getElementById('confirmTitle').textContent = 'Your book is ready';
+  confirmText.textContent = done + ' pages are done.' +
+    (failures ? ' ' + failures + " didn't come out - refresh this page and we'll retry just those." : '');
+  document.getElementById('downloadBtn').style.display = 'inline-block';
+  document.getElementById('downloadBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 document.getElementById('downloadBtn').addEventListener('click', () => {
-  const { jsPDF } = window.jspdf;
+  const jsPDF = window.jspdf.jsPDF;
   const doc = new jsPDF({ unit: 'in', format: [8.5, 8.5] });
   const childName = document.getElementById('childName').value.trim() || 'My';
 
@@ -572,6 +759,23 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 
   doc.save(childName.replace(/[^a-z0-9]/gi, '-') + '-coloring-book.pdf');
 });
+
+// On load: did we just come back from Stripe?
+(function () {
+  const params = new URLSearchParams(location.search);
+  if (params.get('paid') === '1' && params.get('order')) {
+    resumeAfterPayment(params.get('order'));
+  } else if (params.get('canceled') === '1') {
+    const st = loadState();
+    if (st) {
+      document.getElementById('childName').value = st.childName || '';
+      document.getElementById('parentEmail').value = st.email || '';
+      document.getElementById('notes').value = st.notes || '';
+    }
+    generateError.textContent = 'Checkout was canceled - nothing was charged. Your preview is still here whenever you want to finish.';
+    generateError.style.display = 'block';
+  }
+})();
 
 const adminPanel = document.getElementById('adminPanel');
 const adminToggleBtn = document.getElementById('adminToggleBtn');
