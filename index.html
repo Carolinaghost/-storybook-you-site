@@ -182,6 +182,20 @@
     font-family: 'Karla', sans-serif;
   }
   #adminPanel { display: none; }
+  #adminLogin { display: none; }
+  #adminLogin p { margin: 0 0 10px; color: var(--ink-soft); font-size: 14px; }
+  .key-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .key-row input {
+    flex: 1 1 220px; min-width: 0; padding: 10px 12px; font: inherit;
+    border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+  }
+  .key-row input:focus { outline: none; border-color: var(--blue); }
+  .key-row button {
+    padding: 10px 20px; font: inherit; font-weight: 700; cursor: pointer;
+    border: 0; border-radius: 10px; background: var(--blue); color: #fff;
+  }
+  .key-row button:hover { background: var(--blue-dark); }
+  #adminLoginError { display: none; color: var(--danger); font-size: 14px; margin-top: 10px; }
   .order-row {
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -365,6 +379,16 @@
   </div>
   <div class="page" id="adminPanel">
     <h2 style="font-size:18px;">Submitted orders</h2>
+
+    <div id="adminLogin">
+      <p>Enter your admin key to see orders.</p>
+      <div class="key-row">
+        <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="current-password">
+        <button type="button" id="adminUnlockBtn">Unlock</button>
+      </div>
+      <div id="adminLoginError"></div>
+    </div>
+
     <div id="orderList"></div>
   </div>
 
@@ -952,6 +976,19 @@ async function openFromLink(id, token) {
 
 const adminPanel = document.getElementById('adminPanel');
 const adminToggleBtn = document.getElementById('adminToggleBtn');
+const adminLogin = document.getElementById('adminLogin');
+const adminKeyInput = document.getElementById('adminKeyInput');
+const adminUnlockBtn = document.getElementById('adminUnlockBtn');
+const adminLoginError = document.getElementById('adminLoginError');
+
+function unlockAdmin() {
+  adminKey = adminKeyInput.value.trim();
+  if (!adminKey) { adminKeyInput.focus(); return; }
+  adminKeyInput.value = '';
+  loadOrders();
+}
+adminUnlockBtn.addEventListener('click', unlockAdmin);
+adminKeyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') unlockAdmin(); });
 let adminKey = '';
 adminToggleBtn.addEventListener('click', async () => {
   const showing = adminPanel.style.display === 'block';
@@ -977,15 +1014,18 @@ async function loadOrders() {
     if (adminKey) url += '?key=' + encodeURIComponent(adminKey);
     let response = await fetch(url);
 
+    // A browser prompt() freezes the whole tab while it is open, so the key is
+    // asked for with an ordinary field on the page instead.
     if (response.status === 401) {
-      adminKey = prompt('Enter the admin key to view orders:') || '';
-      url = BACKEND_URL + '/orders?key=' + encodeURIComponent(adminKey);
-      response = await fetch(url);
-      if (response.status === 401) {
-        listEl.innerHTML = '<div class="empty">Incorrect admin key.</div>';
-        return;
-      }
+      listEl.innerHTML = '';
+      adminLogin.style.display = 'block';
+      adminLoginError.style.display = adminKey ? 'block' : 'none';
+      if (adminKey) adminLoginError.textContent = 'That key was not accepted.';
+      adminKeyInput.focus();
+      return;
     }
+    adminLogin.style.display = 'none';
+    adminLoginError.style.display = 'none';
 
     const data = await response.json();
     const ordersList = (data && data.orders) || [];
