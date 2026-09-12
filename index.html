@@ -580,8 +580,14 @@ function paintGrid(total) {
 
 // Generates scenes [from, to). Passes the order credentials so the backend can
 // tell a paid request from a free preview.
+// Holds the last thing the server said when a page failed, so the message the
+// visitor sees can be the real reason ("you have used up the free previews")
+// rather than a generic shrug.
+let lastConvertError = '';
+
 async function generateRange(from, to, file, opts) {
   let failures = 0;
+  lastConvertError = '';
   cancelRequested = false;
   stopBtn.style.display = 'inline-block';
   stopBtn.disabled = false;
@@ -620,6 +626,7 @@ async function generateRange(from, to, file, opts) {
     } catch (err) {
       if (err.name === 'AbortError') { if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>stopped'; break; }
       failures++;
+      lastConvertError = err.message || '';
       if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
     }
   }
@@ -691,7 +698,7 @@ previewBtn.addEventListener('click', async () => {
     });
 
     if (storyPages.filter(Boolean).length === 0) {
-      generateError.textContent = 'The preview pages could not be drawn. Try again in a moment.';
+      generateError.textContent = lastConvertError || 'The preview pages could not be drawn. Try again in a moment.';
       generateError.style.display = 'block';
     } else {
       document.getElementById('previewCountText').textContent = freePreviewPages;
