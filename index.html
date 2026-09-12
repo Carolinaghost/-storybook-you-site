@@ -196,6 +196,13 @@
   .career-pill select:focus-visible { outline:2px solid var(--blue); outline-offset:2px; border-radius:4px; }
   .career-pill.active select { color:#fff; }
   .career-pill.active select option { color:var(--ink); }
+  .order-row { display:flex; align-items:center; gap:10px; }
+  .badge-paid { background:#DFF3E4; color:#1F7A3D; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:700; }
+  .badge-unpaid { background:#F3F1E9; color:#6B6357; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:700; }
+  .del-btn { margin-left:auto; border:1px solid #C1432B; background:#fff; color:#C1432B;
+             border-radius:8px; padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .del-btn.armed { background:#C1432B; color:#fff; }
+  .del-btn:disabled { opacity:0.6; cursor:default; }
 </style>
 </head>
 <body>
@@ -889,6 +896,10 @@ adminToggleBtn.addEventListener('click', async () => {
   await loadOrders();
 });
 
+function formatUsd(cents) {
+  return '$' + (cents / 100).toFixed(2);
+}
+
 async function loadOrders() {
   const listEl = document.getElementById('orderList');
   listEl.innerHTML = '<div class="empty">Loading...</div>';
@@ -918,18 +929,10 @@ async function loadOrders() {
       const row = document.createElement('div');
       row.className = 'order-row';
 
+      const money = o.amountCents ? ' ' + formatUsd(o.amountCents) : '';
       const paidBadge = o.paid
-        ? '<span style="background:#DFF3E4;color:#1F7A3D;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">PAID' +
-          (o.amountCents ? ' 
-  } catch (err) {
-    listEl.innerHTML = '<div class="empty">Couldn\'t load orders.</div>';
-  }
-}
-</script>
-</body>
-</html>
- + (o.amountCents / 100).toFixed(2) : '') + '</span>'
-        : '<span style="background:#F3F1E9;color:#6B6357;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">unpaid</span>';
+        ? '<span class="badge-paid">PAID' + money + '</span>'
+        : '<span class="badge-unpaid">unpaid</span>';
 
       const meta = document.createElement('div');
       meta.className = 'meta';
@@ -940,24 +943,24 @@ async function loadOrders() {
         (o.notes ? o.notes + '<br>' : '') +
         new Date(o.submittedAt).toLocaleString();
 
-      // Two-step delete: the first click only arms it. No browser dialog, and
-      // no single click can destroy an order.
+      // Two-step delete: the first click only arms it, and it disarms itself
+      // after a few seconds. No browser dialog, and no single click destroys data.
       const del = document.createElement('button');
+      del.className = 'del-btn';
       del.textContent = 'Delete';
-      del.style.cssText = 'margin-left:auto;border:1px solid #C1432B;background:#fff;color:#C1432B;' +
-        'border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;';
       let armed = false;
       let armTimer = null;
+      function disarm() {
+        armed = false;
+        del.textContent = 'Delete';
+        del.classList.remove('armed');
+      }
       del.addEventListener('click', async () => {
         if (!armed) {
           armed = true;
           del.textContent = o.paid ? 'Delete PAID order?' : 'Really delete?';
-          del.style.background = '#C1432B';
-          del.style.color = '#fff';
-          armTimer = setTimeout(() => {
-            armed = false; del.textContent = 'Delete';
-            del.style.background = '#fff'; del.style.color = '#C1432B';
-          }, 4000);
+          del.classList.add('armed');
+          armTimer = setTimeout(disarm, 4000);
           return;
         }
         clearTimeout(armTimer);
@@ -968,7 +971,7 @@ async function loadOrders() {
           if (o.paid) url += '&force=1';
           const r = await fetch(url, { method: 'DELETE' });
           if (!r.ok) {
-            const e = await r.json().catch(() => ({}));
+            const e = await r.json().catch(function () { return {}; });
             throw new Error(e.error || 'Delete failed.');
           }
           row.style.opacity = '0.4';
@@ -976,11 +979,9 @@ async function loadOrders() {
           setTimeout(loadOrders, 600);
         } catch (err) {
           del.disabled = false;
-          del.textContent = 'Delete';
-          del.style.background = '#fff';
-          del.style.color = '#C1432B';
-          armed = false;
-          alert(err.message);
+          disarm();
+          listEl.insertAdjacentHTML('afterbegin',
+            '<div class="empty" style="color:#C1432B;">' + err.message + '</div>');
         }
       });
 
@@ -992,9 +993,6 @@ async function loadOrders() {
       }
       row.appendChild(meta);
       row.appendChild(del);
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.gap = '10px';
       listEl.appendChild(row);
     });
   } catch (err) {
