@@ -27,10 +27,29 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--paper);
     color: var(--ink);
     font-family: 'Karla', sans-serif;
     line-height: 1.55;
+    /* Warm colour wash plus a faint tile of coloring-book doodles. Fixed, so it
+       stays put while the page scrolls, and it sits under solid white cards so
+       nothing here fights with the text. */
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(900px 520px at 8% -8%, rgba(242, 174, 61, 0.30), rgba(242, 174, 61, 0) 62%),
+      radial-gradient(820px 500px at 94% -4%, rgba(90, 150, 220, 0.24), rgba(90, 150, 220, 0) 64%),
+      radial-gradient(760px 560px at 50% 112%, rgba(76, 140, 91, 0.20), rgba(76, 140, 91, 0) 62%),
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22300%22%20viewBox%3D%220%200%20300%20300%22%3E%20%3Cg%20fill%3D%22none%22%20stroke%3D%22%232A2724%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%220.07%22%3E%20%3Cpath%20d%3D%22M46%2030l7.5%2015.4%2017%202.5-12.3%2012%202.9%2016.9L46%2068.8%2030.9%2076.8l2.9-16.9-12.3-12%2017-2.5z%22%2F%3E%20%3Cpath%20d%3D%22M196%2044c0-9%207.3-16.2%2016.2-16.2%206.3%200%2011.7%203.6%2014.4%208.8%201.7-.9%203.6-1.4%205.6-1.4%206.8%200%2012.3%205.5%2012.3%2012.3S239%2059.8%20232.2%2059.8h-36.6c-6%200-10.8-4.9-10.8-10.9%200-3.5%201.7-6.6%204.3-8.6%22%2F%3E%20%3Cpath%20d%3D%22M136%20228c-5-5.6-13.6-5.6-17.8%200-4.2-5.6-12.8-5.6-17.8%200-4.8%205.3-3.7%2013.3%201.7%2018.2l16.1%2014.6%2016.1-14.6c5.4-4.9%206.5-12.9%201.7-18.2z%22%2F%3E%20%3Cpath%20d%3D%22M232%20168c0%2011-9%2021.6-18%2027-9-5.4-18-16-18-27a18%2018%200%200136%200z%22%2F%3E%20%3Cpath%20d%3D%22M214%20195l-2%207h8l-2-7%22%2F%3E%20%3Cpath%20d%3D%22M212%20202c1%208-6%2011-4%2018%22%2F%3E%20%3Cpath%20d%3D%22M124%20116l5.6%2011.5%2012.7%201.9-9.2%209%202.2%2012.6-11.3-6-11.3%206%202.2-12.6-9.2-9%2012.7-1.9z%22%2F%3E%20%3Cpath%20d%3D%22M24%20152c12-14%2024%2014%2036%200s24%2014%2036%200%22%2F%3E%20%3Cpath%20d%3D%22M214%20118c12-14%2024%2014%2036%200%22%2F%3E%20%3Cpath%20d%3D%22M62%20262c10-12%2022%2012%2032%200%22%2F%3E%20%3Ccircle%20cx%3D%22266%22%20cy%3D%22238%22%20r%3D%229%22%2F%3E%20%3Ccircle%20cx%3D%22166%22%20cy%3D%22286%22%20r%3D%226%22%2F%3E%20%3Ccircle%20cx%3D%2216%22%20cy%3D%22212%22%20r%3D%226%22%2F%3E%20%3C%2Fg%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    background-attachment: fixed, fixed, fixed, fixed;
+    background-size: auto, auto, auto, 300px 300px;
+  }
+
+  /* Lift the header off the new background a little. */
+  .brand { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
+  .page { box-shadow: 0 6px 22px rgba(42, 39, 36, 0.06); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .page { transition: box-shadow 0.2s ease; }
   }
   .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
   h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
