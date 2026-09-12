@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Policies — Storybook You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF6EA;
+    --card: #FFFFFF;
+    --ink: #2A2724;
+    --ink-soft: #6B6357;
+    --blue: #2F5FA8;
+    --blue-dark: #1F4479;
+    --orange: #E8622C;
+    --line: #DCD2B8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
+  header { text-align: center; margin-bottom: 28px; }
+  .brand { font-size: 34px; color: var(--blue-dark); }
+  .brand a { color: inherit; text-decoration: none; }
+  .updated { color: var(--ink-soft); font-size: 14px; margin-top: 6px; }
+
+  nav.jump {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin-bottom: 28px;
+  }
+  nav.jump a {
+    border: 2px solid var(--line); background: #fff; border-radius: 999px;
+    padding: 6px 16px; font-size: 14px; font-weight: 700;
+    color: var(--blue-dark); text-decoration: none;
+  }
+  nav.jump a:hover { border-color: var(--orange); color: var(--orange); }
+
+  section {
+    background: var(--card);
+    border: 2px dashed var(--line);
+    border-radius: 18px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+  section h2 { font-size: 25px; color: var(--blue-dark); margin-bottom: 4px; }
+  section h3 { font-size: 17px; margin: 22px 0 4px; }
+  p { margin: 10px 0; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 6px 0; }
+  a { color: var(--blue); }
+  .lead { color: var(--ink-soft); }
+  .back { display: block; text-align: center; margin-top: 30px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand"><a href="/">Storybook You</a></div>
+    <div class="updated">Policies &middot; last updated 12 September 2026</div>
+  </header>
+
+  <nav class="jump">
+    <a href="#privacy">Privacy</a>
+    <a href="#terms">Terms</a>
+    <a href="#refunds">Refunds</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <section id="privacy">
+    <h2>Privacy</h2>
+    <p class="lead">Storybook You is a service of Comfort Systems of America INC. This explains what we collect, what we do with it, and how long we keep it. Plain English, no tricks.</p>
+
+    <h3>What we collect</h3>
+    <ul>
+      <li>The photo you upload.</li>
+      <li>The child's first name, so it can appear on the cover.</li>
+      <li>Your email address, so we can send you the finished book.</li>
+      <li>Your choices: the art style, how many children are in the photo, and any notes you add.</li>
+      <li>Your IP address, kept for about an hour, only to stop one person using up all the free previews.</li>
+    </ul>
+
+    <h3>What happens to the photo</h3>
+    <p>The photo is sent to OpenAI, which turns it into line drawings. That is the only thing it is used for. We never use it to train anything, and we never sell or share it with anyone else.</p>
+    <p><strong>We delete the photo as soon as your book is finished drawing.</strong> If a book never finishes — a failure on our end, or an order that was abandoned — anything left over is deleted automatically within 30 days.</p>
+
+    <h3>What we keep</h3>
+    <ul>
+      <li>The finished drawings, so you can download your book again later.</li>
+      <li>Your email address and order record, for receipts and support.</li>
+    </ul>
+    <p>We do not keep your card details. Payments are handled by Stripe, and card numbers never reach our server.</p>
+
+    <h3>Who else is involved</h3>
+    <p>We use a small number of outside services to run this, and only what each one needs is shared with it:</p>
+    <ul>
+      <li><strong>OpenAI</strong> — generates the artwork from your photo.</li>
+      <li><strong>Stripe</strong> — processes payment.</li>
+      <li><strong>Render</strong> and <strong>Neon</strong> — host the service and store orders.</li>
+      <li><strong>Google Workspace</strong> — sends your emails.</li>
+    </ul>
+
+    <h3>Children</h3>
+    <p>This service is sold to adults. You must be 18 or older to place an order. Children do not create accounts here and we do not knowingly collect information directly from a child. The photo is uploaded by an adult who has the right to share it.</p>
+
+    <h3>Your choices</h3>
+    <p>Email us and we will delete your order, your images and your email address from our systems. No form, no hoops.</p>
+    <p>We do not sell your information, we do not run ads, and we do not send marketing email you did not ask for.</p>
+  </section>
+
+  <section id="terms">
+    <h2>Terms</h2>
+
+    <h3>What you are buying</h3>
+    <p>A personalized digital coloring book: 15 pages plus a cover, delivered as a PDF you download. It is not a physical product and nothing is shipped.</p>
+
+    <h3>Your photo</h3>
+    <p>By uploading a photo you confirm that you are 18 or older, that the photo is yours to use, and that you have permission from the parent or guardian of anyone in it. Do not upload photos of people who have not agreed to it.</p>
+
+    <h3>What the art will look like</h3>
+    <p>The pages are drawn by AI from your photo. It aims for a recognizable likeness but it is an interpretation, not a tracing, and results vary from photo to photo. Clear, front-facing, well-lit photos work best. If you are not happy with the result, the refund policy below covers you.</p>
+
+    <h3>What you can do with your book</h3>
+    <p>It is yours for personal use. Print it as many times as you like for your own family. Please do not resell it, redistribute it, or use it commercially.</p>
+
+    <h3>Things we can do</h3>
+    <p>We may decline or cancel an order and refund it — for example if a photo breaks these terms, or if we cannot produce a usable book from it.</p>
+
+    <h3>Limits</h3>
+    <p>We do our best to keep the service running and your book available, but we provide it as-is. Our responsibility to you is limited to refunding what you paid.</p>
+
+    <h3>Governing law</h3>
+    <p>These terms are governed by the laws of the State of North Carolina, United States.</p>
+  </section>
+
+  <section id="refunds">
+    <h2>Refunds</h2>
+    <p class="lead">You see two finished pages of your own photo before you pay anything, so you know what the art looks like before you spend a cent. After that, here is how we handle problems.</p>
+
+    <h3>If something went wrong</h3>
+    <p>If your book never arrived, or pages are missing or broken, tell us. We will finish it or refund you in full &mdash; your choice. This one is simple: our fault, our problem.</p>
+
+    <h3>If you do not like how it turned out</h3>
+    <p>Email us within 14 days and we will redraw your book once, free. Send a different photo or tell us what you would rather see, and we will run it again. Most disappointing results come down to the photo &mdash; a clearer, front-facing, well-lit one usually fixes it.</p>
+    <p>If you are still not happy after the redraw, we will refund you half of what you paid. By that point we have drawn your book twice, and this splits the cost of that between us.</p>
+
+    <h3>What we do not refund</h3>
+    <p>We do not refund a book that came out as described simply because you changed your mind after downloading it. The free preview is there so you can decide before buying.</p>
+
+    <p>Refunds go back to the card you paid with. Stripe usually takes 5&ndash;10 business days to post it, depending on your bank.</p>
+  </section>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>Questions, refunds, deletion requests, or anything else:</p>
+    <p><strong><a href="mailto:support@csoainc.com">support@csoainc.com</a></strong></p>
+    <p class="lead">
+      Storybook You is a service of Comfort Systems of America INC<br>
+      1852 Banking St, Ste 29710<br>
+      Greensboro, NC 27408
+    </p>
+  </section>
+
+  <a class="back" href="/">&larr; Back to Storybook You</a>
+
+</div>
+</body>
+</html>
