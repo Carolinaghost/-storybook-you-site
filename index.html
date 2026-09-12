@@ -917,12 +917,84 @@ async function loadOrders() {
     ordersList.forEach(o => {
       const row = document.createElement('div');
       row.className = 'order-row';
-      row.innerHTML =
-        '<img src="' + o.thumb + '" alt="">' +
-        '<div class="meta"><b>' + o.childName + '</b> — ' + o.theme + (o.childCount > 1 ? ' (' + o.childCount + ' kids)' : '') + '<br>' +
+
+      const paidBadge = o.paid
+        ? '<span style="background:#DFF3E4;color:#1F7A3D;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">PAID' +
+          (o.amountCents ? ' 
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">Couldn\'t load orders.</div>';
+  }
+}
+</script>
+</body>
+</html>
+ + (o.amountCents / 100).toFixed(2) : '') + '</span>'
+        : '<span style="background:#F3F1E9;color:#6B6357;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">unpaid</span>';
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML =
+        '<b>#' + o.id + ' ' + o.childName + '</b> — ' + o.theme +
+        (o.childCount > 1 ? ' (' + o.childCount + ' kids)' : '') + ' ' + paidBadge + '<br>' +
         o.email + '<br>' +
         (o.notes ? o.notes + '<br>' : '') +
-        new Date(o.submittedAt).toLocaleString() + '</div>';
+        new Date(o.submittedAt).toLocaleString();
+
+      // Two-step delete: the first click only arms it. No browser dialog, and
+      // no single click can destroy an order.
+      const del = document.createElement('button');
+      del.textContent = 'Delete';
+      del.style.cssText = 'margin-left:auto;border:1px solid #C1432B;background:#fff;color:#C1432B;' +
+        'border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;';
+      let armed = false;
+      let armTimer = null;
+      del.addEventListener('click', async () => {
+        if (!armed) {
+          armed = true;
+          del.textContent = o.paid ? 'Delete PAID order?' : 'Really delete?';
+          del.style.background = '#C1432B';
+          del.style.color = '#fff';
+          armTimer = setTimeout(() => {
+            armed = false; del.textContent = 'Delete';
+            del.style.background = '#fff'; del.style.color = '#C1432B';
+          }, 4000);
+          return;
+        }
+        clearTimeout(armTimer);
+        del.disabled = true;
+        del.textContent = 'Deleting...';
+        try {
+          let url = BACKEND_URL + '/orders/' + o.id + '?key=' + encodeURIComponent(adminKey);
+          if (o.paid) url += '&force=1';
+          const r = await fetch(url, { method: 'DELETE' });
+          if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            throw new Error(e.error || 'Delete failed.');
+          }
+          row.style.opacity = '0.4';
+          del.textContent = 'Deleted';
+          setTimeout(loadOrders, 600);
+        } catch (err) {
+          del.disabled = false;
+          del.textContent = 'Delete';
+          del.style.background = '#fff';
+          del.style.color = '#C1432B';
+          armed = false;
+          alert(err.message);
+        }
+      });
+
+      if (o.thumb) {
+        const img = document.createElement('img');
+        img.src = o.thumb;
+        img.alt = '';
+        row.appendChild(img);
+      }
+      row.appendChild(meta);
+      row.appendChild(del);
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '10px';
       listEl.appendChild(row);
     });
   } catch (err) {
