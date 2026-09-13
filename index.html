@@ -201,20 +201,31 @@
   .career-pill.active select option { color:var(--ink); }
 
   .samples { padding-bottom: 20px; }
-  .sample-grid {
+
+  /* Two showcases either side of this card, each fading through the same set of
+     photo-and-page pairs a few seconds apart. A pair always fades as a unit, so
+     the page beside a photo is the page that photo actually produced. */
+  .sample-stage {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
     margin-top: 16px;
   }
-  .sample { margin: 0; }
-  .sample-pair {
-    display: grid;
-    grid-template-columns: 1fr 18px 1fr;
-    align-items: center;
-    gap: 6px;
+  .sample-rail { position: relative; }
+  .sample-slide { margin: 0; opacity: 0; }
+  .sample-slide.is-active { opacity: 1; }
+  /* Every slide after the first is stacked on top of it, so the rail keeps the
+     height of a single pair and one fades in exactly where the last faded out.
+     The first slide stays in flow to set that height - no layout shift. */
+  .sample-rail .sample-slide + .sample-slide { position: absolute; inset: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .sample-slide { transition: opacity 900ms ease; }
   }
+
+  .sample-pair { display: flex; align-items: center; gap: 8px; }
   .sample-pair img {
+    flex: 1 1 0;
+    min-width: 0;
     width: 100%;
     height: auto;
     aspect-ratio: 1;
@@ -225,13 +236,19 @@
     background: #fff;
   }
   .sample-arrow {
+    flex: 0 0 auto;
     text-align: center;
     color: var(--orange);
     font-size: 16px;
     font-weight: 700;
     line-height: 1;
   }
-  .sample figcaption {
+  /* Right-hand rail is mirrored so its photo sits against the outside edge too,
+     with the page it produced inboard of it. */
+  .sample-rail-right .sample-pair { flex-direction: row-reverse; }
+  .sample-rail-right .sample-arrow { transform: scaleX(-1); }
+
+  .sample-slide figcaption {
     margin-top: 7px;
     text-align: center;
     font-family: 'Baloo 2', sans-serif;
@@ -246,8 +263,42 @@
     text-align: center;
     line-height: 1.5;
   }
+
+  /* Wide screens only: lift the rails out of the card and into the page
+     margins, photo hard against the outside edge. Below this there is no margin
+     to put them in, so they stay in the card. Drop this one block to keep the
+     in-card layout everywhere. Skipped when motion is reduced, because then
+     every pair is shown at once and the stack is too tall for a margin. */
+  @media (min-width: 1280px) and (prefers-reduced-motion: no-preference) {
+    .sample-stage { display: block; margin-top: 0; }
+    .sample-rail {
+      position: absolute;
+      top: 28px;
+      width: clamp(190px, 17vw, 280px);
+    }
+    .sample-rail-left { right: calc(100% + 22px); }
+    .sample-rail-right { left: calc(100% + 22px); }
+  }
+
+  /* No motion wanted: no fading, no rotation - every pair on show at once, as a
+     plain grid. Both rails carry the whole set, so the second one is dropped
+     rather than printing each pair twice. */
+  @media (prefers-reduced-motion: reduce) {
+    .sample-stage { grid-template-columns: minmax(0, 1fr); }
+    .sample-rail-right { display: none; }
+    .sample-rail-left { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sample-rail .sample-slide,
+    .sample-rail .sample-slide + .sample-slide { position: static; opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) and (max-width: 560px) {
+    .sample-rail-left { grid-template-columns: minmax(0, 1fr); }
+  }
+
   @media (max-width: 560px) {
-    .sample-grid { grid-template-columns: 1fr; gap: 14px; }
+    .sample-stage { grid-template-columns: 1fr; gap: 14px; }
+    /* Stacked, not flanking, so both rows read left to right again. */
+    .sample-rail-right .sample-pair { flex-direction: row; }
+    .sample-rail-right .sample-arrow { transform: none; }
   }
 </style>
 </head>
@@ -262,42 +313,78 @@
   <div class="page samples">
     <h2>What you get</h2>
     <p class="step-desc">A photo goes in. A page starring them comes out.</p>
-    <div class="sample-grid">
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/storybook-samples/jasmin-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a yellow shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/storybook-samples/jasmin-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn as a caped superhero on a rooftop">
-        </div>
-        <figcaption>Superhero</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/storybook-samples/mei-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a pink shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/storybook-samples/mei-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn at a door in a magic tree">
-        </div>
-        <figcaption>Fairy tale</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/storybook-samples/owen-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling boy in a blue shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/storybook-samples/owen-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a coloring-page portrait">
-        </div>
-        <figcaption>Simple portrait</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/storybook-samples/malik-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a boy in a green hoodie looking to the side">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/storybook-samples/malik-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a coloring-page portrait from the side">
-        </div>
-        <figcaption>Simple portrait, side view</figcaption>
-      </figure>
+    <div class="sample-stage" role="group" aria-label="Sample photos and the coloring pages made from them">
+      <div class="sample-rail sample-rail-left">
+        <figure class="sample-slide is-active">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/jasmin-photo.jpg" width="700" height="700" loading="eager" alt="Photo of a smiling girl in a yellow shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/jasmin-page.jpg" width="700" height="700" loading="eager" alt="The same girl drawn as a caped superhero on a rooftop">
+          </div>
+          <figcaption>Superhero</figcaption>
+        </figure>
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/mei-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a pink shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/mei-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn at a door in a magic tree">
+          </div>
+          <figcaption>Fairy tale</figcaption>
+        </figure>
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/owen-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling boy in a blue shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/owen-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a coloring-page portrait">
+          </div>
+          <figcaption>Simple portrait</figcaption>
+        </figure>
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/malik-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a boy in a green hoodie looking to the side">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/malik-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a coloring-page portrait from the side">
+          </div>
+          <figcaption>Simple portrait, side view</figcaption>
+        </figure>
+      </div>
+      <div class="sample-rail sample-rail-right">
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/jasmin-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a yellow shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/jasmin-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn as a caped superhero on a rooftop">
+          </div>
+          <figcaption>Superhero</figcaption>
+        </figure>
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/mei-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a pink shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/mei-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn at a door in a magic tree">
+          </div>
+          <figcaption>Fairy tale</figcaption>
+        </figure>
+        <figure class="sample-slide is-active">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/owen-photo.jpg" width="700" height="700" loading="eager" alt="Photo of a smiling boy in a blue shirt">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/owen-page.jpg" width="700" height="700" loading="eager" alt="The same boy drawn as a coloring-page portrait">
+          </div>
+          <figcaption>Simple portrait</figcaption>
+        </figure>
+        <figure class="sample-slide" aria-hidden="true">
+          <div class="sample-pair">
+            <img class="sample-photo" src="samples/storybook-samples/malik-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a boy in a green hoodie looking to the side">
+            <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+            <img class="sample-page" src="samples/storybook-samples/malik-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a coloring-page portrait from the side">
+          </div>
+          <figcaption>Simple portrait, side view</figcaption>
+        </figure>
+      </div>
     </div>
     <p class="sample-note">
-      The photos above are AI-generated stand-ins, not real customers &mdash; we do not publish
+      The sample photos here are AI-generated stand-ins, not real customers &mdash; we do not publish
       our customers' photos. The coloring pages are real output from this site.
     </p>
   </div>
@@ -1050,6 +1137,45 @@ async function openFromLink(id, token) {
   }
 })();
 
+// --- Sample showcase -------------------------------------------------------
+// Fades each rail through its pairs so a visitor sees several kids and themes
+// without scrolling or clicking. The two rails are staggered by half a turn so
+// they never change at the same moment. If the visitor has asked for reduced
+// motion, CSS has already shown every pair at once and nothing here runs.
+(function () {
+  const rails = Array.from(document.querySelectorAll('.sample-rail'));
+  if (!rails.length) return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // CSS is showing every pair at once, so the markup's starting aria-hidden
+    // flags would hide visible pairs from a screen reader. Clear them and stop.
+    document.querySelectorAll('.sample-slide[aria-hidden]').forEach(function (slide) {
+      slide.removeAttribute('aria-hidden');
+    });
+    return;
+  }
+
+  const HOLD = 5000; // how long a pair stays before the next fades in
+
+  rails.forEach(function (rail, railIndex) {
+    const slides = Array.from(rail.querySelectorAll('.sample-slide'));
+    if (slides.length < 2) return;
+    let index = slides.findIndex(function (s) { return s.classList.contains('is-active'); });
+    if (index < 0) index = 0;
+
+    function step() {
+      slides[index].classList.remove('is-active');
+      slides[index].setAttribute('aria-hidden', 'true');
+      index = (index + 1) % slides.length;
+      slides[index].classList.add('is-active');
+      slides[index].removeAttribute('aria-hidden');
+    }
+
+    setTimeout(function () {
+      setInterval(step, HOLD);
+    }, railIndex * (HOLD / 2));
+  });
+})();
 </script>
 </body>
 </html>
