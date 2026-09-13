@@ -57,6 +57,28 @@
   .del-btn.armed { background:var(--danger); color:#fff; }
   .del-btn:disabled { opacity:0.6; cursor:default; }
 
+  #statsCard { display: none; }
+  .stats-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .stats-head h2 { font-family:'Baloo 2', sans-serif; margin:0; font-size:22px; color:var(--blue-dark); }
+  .range button {
+    border:1px solid var(--line); background:#fff; color:var(--ink-soft);
+    font:inherit; font-size:13px; padding:4px 10px; border-radius:999px; cursor:pointer; margin-left:6px;
+  }
+  .range button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .funnel-row { display:grid; grid-template-columns: 150px 1fr 96px; align-items:center; gap:10px; margin-bottom:7px; font-size:13px; }
+  .funnel-row .label { color:var(--ink-soft); }
+  .funnel-row .bar { background:#F1EDE0; border-radius:999px; height:16px; overflow:hidden; }
+  .funnel-row .bar span { display:block; height:100%; background:var(--blue); border-radius:999px; }
+  .funnel-row .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .funnel-row .num b { font-family:'Baloo 2', sans-serif; }
+  .funnel-row .num i { font-style:normal; color:var(--ink-soft); font-size:12px; margin-left:5px; }
+  .drop { font-size:12px; color:var(--ink-soft); margin:10px 0 0; }
+  table.sources { width:100%; border-collapse:collapse; margin-top:6px; font-size:13px; }
+  table.sources th { text-align:left; color:var(--ink-soft); font-weight:normal; font-size:12px; padding:4px 6px; border-bottom:1px solid var(--line); }
+  table.sources td { padding:5px 6px; border-bottom:1px solid #F1EDE0; font-variant-numeric:tabular-nums; }
+  table.sources td:first-child { font-family:'Baloo 2', sans-serif; }
+  table.sources td.n { text-align:right; }
+  .sub { font-family:'Baloo 2', sans-serif; font-size:15px; margin:20px 0 2px; color:var(--ink); }
   .back { display:block; text-align:center; margin-top:24px; font-size:14px; color: var(--ink-soft); }
 </style>
 </head>
@@ -67,6 +89,20 @@
     <h1>Orders</h1>
     <div class="tagline">Storybook You business view</div>
   </header>
+
+  <div class="page" id="statsCard">
+    <div class="stats-head">
+      <h2>How the funnel is doing</h2>
+      <div class="range">
+        <button type="button" data-days="7" class="on">7 days</button>
+        <button type="button" data-days="30">30 days</button>
+        <button type="button" data-days="90">90 days</button>
+      </div>
+    </div>
+    <div id="funnel"></div>
+    <div class="sub">Where they came from</div>
+    <div id="sources"></div>
+  </div>
 
   <div class="page">
     <div id="adminLogin">
@@ -108,6 +144,80 @@ function formatUsd(cents) {
   return '$' + (cents / 100).toFixed(2);
 }
 
+// --- Funnel ---------------------------------------------------------------
+const FUNNEL_LABELS = {
+  landed: 'Visitors',
+  uploaded: 'Uploaded a photo',
+  preview_started: 'Asked for a preview',
+  preview_shown: 'Got a preview',
+  unlock_clicked: 'Clicked unlock',
+  paid: 'Paid'
+};
+let statsDays = 7;
+
+function pct(part, whole) {
+  if (!whole) return '0%';
+  return Math.round((part / whole) * 100) + '%';
+}
+
+async function loadStats() {
+  if (!adminKey) return;
+  const funnelEl = document.getElementById('sources');
+  try {
+    const url = BACKEND_URL + '/stats?days=' + statsDays + '&key=' + encodeURIComponent(adminKey);
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const data = await r.json();
+    document.getElementById('statsCard').style.display = 'block';
+
+    const steps = (data.funnel || []).filter((f) => FUNNEL_LABELS[f.type]);
+    const top = steps.length ? steps[0].visitors : 0;
+    document.getElementById('funnel').innerHTML = steps.map(function (f) {
+      const width = top ? Math.max((f.visitors / top) * 100, f.visitors > 0 ? 2 : 0) : 0;
+      const retry = f.hits > f.visitors ? ' title="' + f.hits + ' clicks in total, so some people tried more than once"' : '';
+      return '<div class="funnel-row"' + retry + '>'
+        + '<span class="label">' + FUNNEL_LABELS[f.type] + '</span>'
+        + '<span class="bar"><span style="width:' + width + '%"></span></span>'
+        + '<span class="num"><b>' + f.visitors + '</b><i>' + pct(f.visitors, top) + '</i></span>'
+        + '</div>';
+    }).join('');
+
+    // The single most useful number: how many of the people who asked for a
+    // preview never got one. That is drawing failures, not lost interest.
+    const asked = (steps.find((f) => f.type === 'preview_started') || {}).visitors || 0;
+    const got = (steps.find((f) => f.type === 'preview_shown') || {}).visitors || 0;
+    const failed = Math.max(asked - got, 0);
+    document.getElementById('funnel').insertAdjacentHTML('beforeend',
+      '<p class="drop">' + (asked
+        ? failed + ' of ' + asked + ' preview requests came back empty (' + pct(failed, asked) + ').'
+        : 'No preview requests yet in this window.') + '</p>');
+
+    const rows = data.sources || [];
+    funnelEl.innerHTML = rows.length
+      ? '<table class="sources"><tr><th>Source</th><th class="n" style="text-align:right">Visitors</th>'
+        + '<th class="n" style="text-align:right">Paid</th><th class="n" style="text-align:right">Rate</th></tr>'
+        + rows.map(function (x) {
+            return '<tr><td>' + String(x.source || 'direct').replace(/[<>]/g, '') + '</td>'
+              + '<td class="n">' + x.visitors + '</td>'
+              + '<td class="n">' + x.paid + '</td>'
+              + '<td class="n">' + pct(x.paid, x.visitors) + '</td></tr>';
+          }).join('')
+        + '</table>'
+      : '<div class="empty">Nothing recorded yet.</div>';
+  } catch (err) {
+    /* stats are a nice-to-have; never let them break the orders view */
+  }
+}
+
+document.querySelectorAll('.range button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.range button').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    statsDays = parseInt(b.dataset.days, 10) || 7;
+    loadStats();
+  });
+});
+
 async function loadOrders() {
   const listEl = document.getElementById('orderList');
   listEl.innerHTML = '<div class="empty">Loading...</div>';
@@ -128,6 +238,7 @@ async function loadOrders() {
     }
     adminLogin.style.display = 'none';
     adminLoginError.style.display = 'none';
+    loadStats();
 
     const data = await response.json();
     const ordersList = (data && data.orders) || [];
