@@ -423,6 +423,47 @@
 <script>
 const BACKEND_URL = 'https://api.storybookyou.art';
 
+// --- Funnel counters -------------------------------------------------------
+// How many people land, how many upload, how many pay. Deliberately anonymous:
+// the visitor id below is a random number living in this variable and nowhere
+// else. Nothing is written to the browser, so there is nothing to consent to
+// and nothing that follows anyone between visits.
+const visitorId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+// Where this person came from, so a link partner can be judged on sales rather
+// than on clicks. A ?utm_source= tag wins; otherwise the referring site.
+const trafficSource = (function () {
+  try {
+    const tagged = new URLSearchParams(location.search).get('utm_source');
+    if (tagged) return tagged;
+    if (!document.referrer) return 'direct';
+    const host = new URL(document.referrer).hostname.replace(/^www\./, '');
+    return host === location.hostname ? 'direct' : host;
+  } catch (err) {
+    return 'direct';
+  }
+})();
+const trafficCampaign = (function () {
+  try { return new URLSearchParams(location.search).get('utm_campaign') || ''; }
+  catch (err) { return ''; }
+})();
+
+// Fire and forget. A counter must never slow down or break a sale, so nothing
+// waits on this and every failure is swallowed on purpose.
+function track(type) {
+  try {
+    fetch(BACKEND_URL + '/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        type: type, visitor: visitorId, source: trafficSource, campaign: trafficCampaign
+      })
+    }).catch(function () {});
+  } catch (err) { /* counters are never worth an error */ }
+}
+track('landed');
+
 let selectedFile = null;      // downscaled JPEG blob sent to the backend
 let photoDataUrl = null;      // same image as a data URL, so it survives the Stripe redirect
 
@@ -477,6 +518,7 @@ function downscale(file, maxDim = 1024) {
 async function handleFile(file) {
   if (!file.type.startsWith('image/')) return;
   fileError.style.display = 'none';
+  track('uploaded');
   try {
     const { blob, dataUrl } = await downscale(file);
     selectedFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
@@ -763,6 +805,7 @@ previewBtn.addEventListener('click', async () => {
   if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
   if (!ok) return;
 
+  track('preview_started');
   previewBtn.disabled = true;
   storyPages = [];
   paywall.style.display = 'none';
@@ -784,7 +827,12 @@ previewBtn.addEventListener('click', async () => {
         // The server keeps the photo so it can draw the book after payment
         // without this browser needing to stay open.
         photo: photoDataUrl,
-        subjectType: audience
+        subjectType: audience,
+        // Carried on the order so the sale can be credited to its source even
+        // though payment is confirmed minutes later, by Stripe, not by us.
+        visitor: visitorId,
+        source: trafficSource,
+        campaign: trafficCampaign
       })
     });
     const data = await res.json();
@@ -802,6 +850,7 @@ previewBtn.addEventListener('click', async () => {
       generateError.textContent = lastConvertError || 'The preview pages could not be drawn. Try again in a moment.';
       generateError.style.display = 'block';
     } else {
+      track('preview_shown');
       document.getElementById('previewCountText').textContent = freePreviewPages;
       document.getElementById('totalCountText').textContent = sceneCount;
       paywall.style.display = 'block';
@@ -819,6 +868,7 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
   const payError = document.getElementById('payError');
   payError.style.display = 'none';
   const btn = document.getElementById('unlockBtn');
+  track('unlock_clicked');
   btn.disabled = true;
   btn.textContent = 'Taking you to checkout...';
   try {
