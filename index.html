@@ -7,6 +7,33 @@
      old flow with no payment step. Always revalidate this page. -->
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>Storybook You — custom coloring books</title>
+<meta name="description" content="Turn a photo into a personalized 15-page coloring book starring your child. Family books include up to five people. Ready in minutes, printed at home.">
+<link rel="canonical" href="https://storybookyou.art/">
+
+<!-- What a pasted link looks like in a message, a post or a group chat. Without
+     these it is a bare URL; with them it is the before-and-after picture, which
+     is the whole pitch. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Storybook You">
+<meta property="og:title" content="Storybook You — custom coloring books from your photo">
+<meta property="og:description" content="Send one photo. Get a 15-page coloring book starring your child. Family books up to five people.">
+<meta property="og:url" content="https://storybookyou.art/">
+<meta property="og:image" content="https://storybookyou.art/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Storybook You — custom coloring books from your photo">
+<meta name="twitter:description" content="Send one photo. Get a 15-page coloring book starring your child.">
+<meta name="twitter:image" content="https://storybookyou.art/og-image.png">
+
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<!-- Bing Webmaster Tools verification. Do not remove after it verifies. -->
+<meta name="msvalidate.01" content="524D9F97AEDC40A4EBBEB9C22BC93A7C" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -376,6 +403,52 @@
     .scatter-stage .page { margin-bottom: 28px; }
   }
 </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Storybook You",
+  "url": "https://storybookyou.art/",
+  "logo": "https://storybookyou.art/icon-512.png",
+  "description": "Personalized coloring books made from your photo."
+}
+</script>
+
+<!-- The prices here are the ones the backend charges (PRICE_CENTS and
+     FAMILY_PRICE_CENTS in server.js: $15 and $25 as of this writing). They are
+     the ONLY hard-coded prices left on this site - everything the customer
+     sees comes from GET /options - so if a price ever changes, change it here
+     too. A search result quoting a price we no longer charge is worse than a
+     search result quoting none. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Personalized coloring book",
+  "description": "A 15-page coloring book drawn from your photo, starring your child. The family version puts up to five people in the same book.",
+  "image": "https://storybookyou.art/og-image.png",
+  "brand": { "@type": "Brand", "name": "Storybook You" },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Single-child coloring book",
+      "price": "15.00",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "url": "https://storybookyou.art/"
+    },
+    {
+      "@type": "Offer",
+      "name": "Family coloring book (up to five people)",
+      "price": "25.00",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "url": "https://storybookyou.art/"
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <div class="wrap">
