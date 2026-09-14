@@ -273,13 +273,22 @@
   .scatter-stage .page { margin-bottom: 0; }
 
   /* ---- who's in the book ---- */
+  /* One person, one block: who the book is for, their name, then their photo.
+     Keeping the photo beside the name is the whole point - a separate upload
+     step meant matching a face to a name from memory, one screen later. */
+  .person-card {
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+    margin-bottom: 14px;
+    background: #fff;
+  }
+  .person-card.is-star { border-color: var(--orange); }
   .person-row {
     display: grid;
     grid-template-columns: 1fr auto auto;
     gap: 8px;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line);
   }
   .person-row input[type="text"] {
     width: 100%;
@@ -305,12 +314,14 @@
     font-size: 20px; line-height: 1; color: var(--ink-soft); padding: 6px 8px;
   }
   .person-row .remove:hover { color: var(--danger); }
+  /* Sits above the name box, so the question is answered before it is asked. */
   .star-row {
-    grid-column: 1 / -1;
     display: flex; align-items: center; gap: 8px;
     font-size: 13.5px; color: var(--ink-soft);
+    margin-bottom: 10px; cursor: pointer;
   }
   .star-row input { accent-color: var(--orange); }
+  .person-card.is-star .star-row { color: var(--orange); font-weight: 700; }
   .add-person {
     margin-top: 12px;
     font: inherit; font-weight: 700; font-size: 14px;
@@ -322,6 +333,7 @@
 
   /* ---- a photo slot per person ---- */
   .photo-slots { display: grid; gap: 12px; }
+  .person-card .photo-slot { margin-top: 12px; }
   .photo-slot {
     display: grid;
     grid-template-columns: 64px 1fr;
@@ -345,8 +357,16 @@
 
   @media (max-width: 560px) {
     .sample-grid { grid-template-columns: 1fr; gap: 14px; }
-    .person-row { grid-template-columns: 1fr auto; }
-    .person-row .ages { grid-column: 1 / -1; }
+    /* Named areas rather than source order: without them the remove button is
+       pushed below the age pills and sits on a line of its own, reading as a
+       stray mark rather than something belonging to this person. */
+    .person-row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "name remove" "ages ages";
+    }
+    .person-row input[type="text"] { grid-area: name; }
+    .person-row .ages { grid-area: ages; }
+    .person-row .remove { grid-area: remove; }
   }
   /* Below this there is no room beside the card, and pages stacked above and
      below it would just crowd the phone layout. */
@@ -413,7 +433,7 @@
   <div class="page">
     <div class="step-label">Step 1</div>
     <h2>Who's in the book?</h2>
-    <p class="step-desc">Tell us who first, then we'll ask for a photo of each of them.</p>
+    <p class="step-desc" id="whoStepDesc">Tell us who first, then we'll ask for a photo of each of them.</p>
 
     <div class="themes" id="bookModePicker">
       <button type="button" class="theme-pill active" data-mode="one">Just one person</button>
@@ -449,12 +469,12 @@
     </div>
   </div>
 
-  <div class="page">
+  <!-- Single-person books only. A family book asks for each photo beside the
+       name it belongs to, in step 1, so this whole card is hidden for one. -->
+  <div class="page" id="uploadStep">
     <div class="step-label">Step 2</div>
-    <h2 id="uploadHeading">Upload a photo</h2>
+    <h2>Upload a photo</h2>
     <p class="step-desc">Front-facing photos with good lighting work best.</p>
-
-    <div id="familyUpload" style="display:none;"></div>
 
     <div id="singleUpload">
     <div class="dropzone" id="dropzone">
@@ -475,7 +495,7 @@
   </div>
 
   <div class="page">
-    <div class="step-label">Step 3</div>
+    <div class="step-label" id="styleStepLabel">Step 3</div>
     <h2>Pick a style</h2>
     <p class="step-desc" id="themeStepDesc">This decides how the page is drawn.</p>
     <div class="themes" id="themes">
@@ -519,7 +539,7 @@
   </div>
 
   <div class="page">
-    <div class="step-label">Step 4</div>
+    <div class="step-label" id="bookStepLabel">Step 4</div>
     <h2>Your book</h2>
     <p class="step-desc">Your free preview pages appear here. Like what you see? Unlock the rest.</p>
 
@@ -769,23 +789,36 @@ function renderPeople() {
   rows.innerHTML = '';
 
   people.forEach((person, i) => {
+    const card = document.createElement('div');
+    card.className = 'person-card' + (person.star ? ' is-star' : '');
+
+    // 1. Who the book is for, above the name box. A parent who uploads
+    //    themselves first would otherwise get a book starring themselves.
+    const starRow = document.createElement('label');
+    starRow.className = 'star-row';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'starPerson';
+    radio.checked = person.star === true;
+    const starText = document.createTextNode('The book is for ' + (person.name.trim() || 'this person'));
+    radio.addEventListener('change', () => {
+      people.forEach((p) => { p.star = false; });
+      person.star = true;
+      renderPeople();
+    });
+    starRow.appendChild(radio);
+    starRow.appendChild(starText);
+    card.appendChild(starRow);
+
+    // 2. Their name.
     const row = document.createElement('div');
     row.className = 'person-row';
-
-    const starText = document.createTextNode('The book is for ' + (person.name.trim() || 'this person'));
 
     const name = document.createElement('input');
     name.type = 'text';
     name.value = person.name;
     name.placeholder = i === 0 ? 'Ava' : 'Mum';
     name.setAttribute('aria-label', 'Name of person ' + (i + 1));
-    name.addEventListener('input', () => {
-      person.name = name.value;
-      // Only the two labels that show the name are touched. Re-rendering the
-      // whole list on every keystroke would take the focus out of this box.
-      starText.nodeValue = 'The book is for ' + (person.name.trim() || 'this person');
-      renderPhotoSlots();          // the slot is labelled with this name
-    });
     row.appendChild(name);
 
     const ages = document.createElement('div');
@@ -812,26 +845,24 @@ function renderPeople() {
       people.splice(i, 1);
       if (!people.some((p) => p.star)) ensureOneStar();
       renderPeople();
-      renderPhotoSlots();
     });
     row.appendChild(remove);
 
-    const starRow = document.createElement('label');
-    starRow.className = 'star-row';
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.name = 'starPerson';
-    radio.checked = person.star === true;
-    radio.addEventListener('change', () => {
-      people.forEach((p) => { p.star = false; });
-      person.star = true;
-      renderPeople();
-    });
-    starRow.appendChild(radio);
-    starRow.appendChild(starText);
-    row.appendChild(starRow);
+    card.appendChild(row);
 
-    rows.appendChild(row);
+    // 3. Their photo, directly under their name.
+    const slot = photoSlot(person, i);
+    card.appendChild(slot.el);
+
+    // Only the labels that show the name are touched. Re-rendering the whole
+    // list on every keystroke would take the focus out of this box.
+    name.addEventListener('input', () => {
+      person.name = name.value;
+      starText.nodeValue = 'The book is for ' + (person.name.trim() || 'this person');
+      slot.refresh();
+    });
+
+    rows.appendChild(card);
   });
 
   const addBtn = document.getElementById('addPersonBtn');
@@ -844,75 +875,61 @@ function renderPeople() {
   }
 }
 
-// One labelled slot per person, in the same order the backend will be told.
-//
-// A slot appears for every person in step 1, named or not. It used to wait for
-// a name, which meant switching to a family book showed a heading, a sentence,
-// and nowhere to upload anything - the step looked broken. An unnamed slot says
-// "Person 2" until the name is typed, and then says the name.
-function renderPhotoSlots() {
-  const wrap = document.getElementById('familyUpload');
-  if (!wrap) return;
+// The upload box for one person, labelled with their name, returned with a way
+// to relabel it as they type. A slot is here from the start rather than waiting
+// for a name: an empty step with nothing to click reads as broken.
+function photoSlot(person, i) {
+  const label = document.createElement('label');
+  label.className = 'photo-slot';
 
-  if (bookMode !== 'family') { wrap.innerHTML = ''; return; }
-  if (!people.length) {
-    wrap.innerHTML = '<p class="people-hint">Add someone in step 1 and a photo slot appears for them.</p>';
-    return;
-  }
+  const thumb = document.createElement('img');
+  thumb.className = 'thumb';
+  thumb.alt = '';
+  label.appendChild(thumb);
 
-  const slots = document.createElement('div');
-  slots.className = 'photo-slots';
+  const text = document.createElement('div');
+  const who = document.createElement('div');
+  who.className = 'who';
+  const state = document.createElement('div');
+  state.className = 'state';
+  text.appendChild(who);
+  text.appendChild(state);
+  label.appendChild(text);
 
-  people.forEach((person, i) => {
-    const label = document.createElement('label');
-    label.className = 'photo-slot' + (person.dataUrl ? ' filled' : '');
-
-    const thumb = document.createElement('img');
-    thumb.className = 'thumb';
-    thumb.alt = '';
-    if (person.dataUrl) thumb.src = person.dataUrl;
-    label.appendChild(thumb);
-
-    const text = document.createElement('div');
+  function refresh() {
     const name = person.name.trim();
-    const who = document.createElement('div');
+    label.className = 'photo-slot' + (person.dataUrl ? ' filled' : '');
     who.className = 'who' + (name ? '' : ' unnamed');
-    who.textContent = (name || 'Person ' + (i + 1)) + (person.star && name ? ' - the book is for them' : '');
-    const state = document.createElement('div');
-    state.className = 'state';
+    who.textContent = name ? 'Photo of ' + name : 'Their photo';
+    if (person.dataUrl) thumb.src = person.dataUrl; else thumb.removeAttribute('src');
     // A photo with no name attached is the one case that would otherwise be
     // dropped quietly, so the slot says what is still missing.
     state.textContent = person.dataUrl
-      ? (name ? 'Photo added - tap to change' : 'Photo added - now give them a name in step 1')
+      ? (name ? 'Photo added - tap to change' : 'Photo added - now type their name above')
       : (name ? 'Tap to add a photo of ' + name : 'Tap to add their photo');
-    text.appendChild(who);
-    text.appendChild(state);
-    label.appendChild(text);
+  }
 
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.addEventListener('change', async () => {
-      const file = input.files && input.files[0];
-      if (!file) return;
-      state.textContent = 'Reading the photo...';
-      try {
-        const { blob, dataUrl } = await downscale(file);
-        person.file = new File([blob], 'person-' + (i + 1) + '.jpg', { type: 'image/jpeg' });
-        person.dataUrl = dataUrl;
-      } catch (err) {
-        state.textContent = 'That photo could not be read. Try another.';
-        return;
-      }
-      renderPhotoSlots();
-    });
-    label.appendChild(input);
-
-    slots.appendChild(label);
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    state.textContent = 'Reading the photo...';
+    try {
+      const { blob, dataUrl } = await downscale(file);
+      person.file = new File([blob], 'person-' + (i + 1) + '.jpg', { type: 'image/jpeg' });
+      person.dataUrl = dataUrl;
+    } catch (err) {
+      state.textContent = 'That photo could not be read. Try another.';
+      return;
+    }
+    refresh();
   });
+  label.appendChild(input);
 
-  wrap.innerHTML = '';
-  wrap.appendChild(slots);
+  refresh();
+  return { el: label, refresh: refresh };
 }
 
 // Everyone who is ready to be drawn: named, with a photo, in order.
@@ -924,15 +941,19 @@ function applyBookMode() {
   const family = bookMode === 'family';
   document.getElementById('onePersonPanel').style.display = family ? 'none' : '';
   document.getElementById('familyPanel').style.display = family ? '' : 'none';
-  document.getElementById('singleUpload').style.display = family ? 'none' : '';
-  document.getElementById('familyUpload').style.display = family ? '' : 'none';
-  document.getElementById('uploadHeading').textContent = family ? 'Add a photo of each person' : 'Upload a photo';
+  document.getElementById('whoStepDesc').textContent = family
+    ? "Add everyone who's in the book, with a photo of each."
+    : "Tell us who first, then we'll ask for a photo of each of them.";
+  // A family book collects its photos beside the names in this step, so the
+  // upload step has nothing left to ask and the ones after it move up.
+  document.getElementById('uploadStep').style.display = family ? 'none' : '';
+  document.getElementById('styleStepLabel').textContent = family ? 'Step 2' : 'Step 3';
+  document.getElementById('bookStepLabel').textContent = family ? 'Step 3' : 'Step 4';
   // In a family book the story follows one person, and that name is the one the
   // book is for - so the name field downstream is filled in from it.
   const nameField = document.getElementById('childName').closest('.field');
   if (nameField) nameField.style.display = family ? 'none' : '';
   renderPeople();
-  renderPhotoSlots();
   showPrice();
 }
 
@@ -954,7 +975,6 @@ document.getElementById('addPersonBtn').addEventListener('click', () => {
   if (people.length >= maxPeople) return;
   people.push(newPerson('adult'));
   renderPeople();
-  renderPhotoSlots();
 });
 
 let audience = 'kid';
@@ -1200,8 +1220,8 @@ previewBtn.addEventListener('click', async () => {
     const photoNoName = people.filter((p) => p.file && !p.name.trim());
     if (photoNoName.length) {
       peopleError.textContent = photoNoName.length === 1
-        ? 'One photo has no name yet. Add the name in step 1 so we know who it is.'
-        : photoNoName.length + ' photos have no name yet. Add their names in step 1 so we know who they are.';
+        ? 'One photo has no name yet. Type the name above it so we know who it is.'
+        : photoNoName.length + ' photos have no name yet. Type the names above them so we know who they are.';
       peopleError.style.display = 'block';
       ok = false;
     } else if (named.length < 2) {
