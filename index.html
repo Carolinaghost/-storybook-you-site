@@ -258,8 +258,80 @@
   }
   .scatter-stage .page { margin-bottom: 0; }
 
+  /* ---- who's in the book ---- */
+  .person-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .person-row input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+  }
+  .person-row .ages { display: flex; gap: 6px; }
+  .person-row .ages button {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 2px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+  }
+  .person-row .ages button.on { border-color: var(--blue); background: #EAF1FB; font-weight: 700; }
+  .person-row .remove {
+    border: 0; background: none; cursor: pointer;
+    font-size: 20px; line-height: 1; color: var(--ink-soft); padding: 6px 8px;
+  }
+  .person-row .remove:hover { color: var(--danger); }
+  .star-row {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; color: var(--ink-soft);
+  }
+  .star-row input { accent-color: var(--orange); }
+  .add-person {
+    margin-top: 12px;
+    font: inherit; font-weight: 700; font-size: 14px;
+    background: #fff; border: 2px dashed var(--line); border-radius: 10px;
+    padding: 10px 16px; cursor: pointer; color: var(--blue-dark);
+  }
+  .add-person:disabled { opacity: .45; cursor: default; }
+  .people-hint { font-size: 13px; color: var(--ink-soft); margin: 10px 0 0; }
+
+  /* ---- a photo slot per person ---- */
+  .photo-slots { display: grid; gap: 12px; }
+  .photo-slot {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 12px;
+    align-items: center;
+    border: 2px dashed var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    background: #fff;
+  }
+  .photo-slot.filled { border-style: solid; border-color: var(--blue); }
+  .photo-slot .thumb {
+    width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+    background: var(--paper); border: 1px solid var(--line);
+  }
+  .photo-slot .who { font-weight: 700; font-family: 'Baloo 2', sans-serif; }
+  .photo-slot .state { font-size: 13px; color: var(--ink-soft); }
+  .photo-slot input[type="file"] { display: none; }
+
   @media (max-width: 560px) {
     .sample-grid { grid-template-columns: 1fr; gap: 14px; }
+    .person-row { grid-template-columns: 1fr auto; }
+    .person-row .ages { grid-column: 1 / -1; }
   }
   /* Below this there is no room beside the card, and pages stacked above and
      below it would just crowd the phone layout. */
@@ -325,8 +397,51 @@
 
   <div class="page">
     <div class="step-label">Step 1</div>
-    <h2>Upload a photo</h2>
+    <h2>Who's in the book?</h2>
+    <p class="step-desc">Tell us who first, then we'll ask for a photo of each of them.</p>
+
+    <div class="themes" id="bookModePicker">
+      <button type="button" class="theme-pill active" data-mode="one">Just one person</button>
+      <button type="button" class="theme-pill" data-mode="family">The whole family</button>
+    </div>
+
+    <div id="onePersonPanel">
+      <div style="margin-top:20px;">
+        <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">Who's the star of this book?</span>
+        <div class="themes" id="audiencePicker">
+          <button type="button" class="theme-pill active" data-audience="kid">A kid</button>
+          <button type="button" class="theme-pill" data-audience="adult">A parent or grandparent (gift)</button>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;" id="countLabel">How many kids are in this photo?</span>
+        <div class="themes" id="childCountPicker">
+          <button type="button" class="theme-pill active" data-count="1">Just 1</button>
+          <button type="button" class="theme-pill" data-count="2">2</button>
+          <button type="button" class="theme-pill" data-count="3">3</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="familyPanel" style="display:none; margin-top:20px;">
+      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:4px; font-family:'Baloo 2', sans-serif;">Everyone who should be in the book</span>
+      <p class="step-desc" style="margin-top:0;">Each person gets their own photo, so the drawings actually look like them.</p>
+      <div id="peopleRows"></div>
+      <button type="button" class="add-person" id="addPersonBtn">+ Add another person</button>
+      <p class="people-hint" id="peopleHint"></p>
+      <div class="error-text" id="peopleError"></div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="step-label">Step 2</div>
+    <h2 id="uploadHeading">Upload a photo</h2>
     <p class="step-desc">Front-facing photos with good lighting work best.</p>
+
+    <div id="familyUpload" style="display:none;"></div>
+
+    <div id="singleUpload">
     <div class="dropzone" id="dropzone">
       <svg viewBox="0 0 24 24" fill="none" stroke="#2F5FA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       <p>Drop a photo here, or tap to choose one</p>
@@ -341,27 +456,11 @@
         <p>Original</p>
       </div>
     </div>
-
-    <div style="margin-top:20px;">
-      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">Who's the star of this book?</span>
-      <div class="themes" id="audiencePicker">
-        <button type="button" class="theme-pill active" data-audience="kid">A kid</button>
-        <button type="button" class="theme-pill" data-audience="adult">A parent or grandparent (gift)</button>
-      </div>
-    </div>
-
-    <div style="margin-top:20px;">
-      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;" id="countLabel">How many kids are in this photo?</span>
-      <div class="themes" id="childCountPicker">
-        <button type="button" class="theme-pill active" data-count="1">Just 1</button>
-        <button type="button" class="theme-pill" data-count="2">2</button>
-        <button type="button" class="theme-pill" data-count="3">3</button>
-      </div>
     </div>
   </div>
 
   <div class="page">
-    <div class="step-label">Step 2</div>
+    <div class="step-label">Step 3</div>
     <h2>Pick a style</h2>
     <p class="step-desc" id="themeStepDesc">This decides how the page is drawn.</p>
     <div class="themes" id="themes">
@@ -405,7 +504,7 @@
   </div>
 
   <div class="page">
-    <div class="step-label">Step 3</div>
+    <div class="step-label">Step 4</div>
     <h2>Your book</h2>
     <p class="step-desc">Your free preview pages appear here. Like what you see? Unlock the rest.</p>
 
@@ -595,6 +694,226 @@ careerSelect.addEventListener('change', () => {
   selectedTheme = careerSelect.value;
 });
 
+// ---------------------------------------------------------------------------
+// Who's in the book
+// ---------------------------------------------------------------------------
+// Asked before any photo is uploaded, so every upload slot can be labelled with
+// a name. A pile of unnamed files is no use to the drawing: the backend matches
+// photos to people by their order, so the names have to exist first.
+let bookMode = 'one';           // 'one' | 'family'
+let maxPeople = 5;              // the backend is the authority; see /options
+let people = [];                // { name, subjectType, star, file, dataUrl }
+
+// The backend publishes its own limits so this page does not keep a second copy
+// that can drift. A failure here is not worth blocking an order over.
+fetch(BACKEND_URL + '/options')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((opts) => {
+    if (opts && opts.family && opts.family.maxPeople) {
+      maxPeople = opts.family.maxPeople;
+      renderPeople();
+    }
+  })
+  .catch(() => {});
+
+function newPerson(subjectType) {
+  return { name: '', subjectType: subjectType || 'kid', star: false, file: null, dataUrl: null };
+}
+
+// Exactly one person is the one the story follows. Without this a parent who
+// uploads themselves first gets a book about themselves.
+function ensureOneStar() {
+  if (people.some((p) => p.star)) return;
+  const child = people.find((p) => p.subjectType === 'kid') || people[0];
+  if (child) child.star = true;
+}
+
+function renderPeople() {
+  const rows = document.getElementById('peopleRows');
+  if (!rows) return;
+  ensureOneStar();
+  rows.innerHTML = '';
+
+  people.forEach((person, i) => {
+    const row = document.createElement('div');
+    row.className = 'person-row';
+
+    const starText = document.createTextNode('The book is for ' + (person.name.trim() || 'this person'));
+
+    const name = document.createElement('input');
+    name.type = 'text';
+    name.value = person.name;
+    name.placeholder = i === 0 ? 'Ava' : 'Mum';
+    name.setAttribute('aria-label', 'Name of person ' + (i + 1));
+    name.addEventListener('input', () => {
+      person.name = name.value;
+      // Only the two labels that show the name are touched. Re-rendering the
+      // whole list on every keystroke would take the focus out of this box.
+      starText.nodeValue = 'The book is for ' + (person.name.trim() || 'this person');
+      renderPhotoSlots();          // the slot is labelled with this name
+    });
+    row.appendChild(name);
+
+    const ages = document.createElement('div');
+    ages.className = 'ages';
+    [['kid', 'Child'], ['adult', 'Adult']].forEach(([value, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.className = person.subjectType === value ? 'on' : '';
+      b.addEventListener('click', () => {
+        person.subjectType = value;
+        renderPeople();
+      });
+      ages.appendChild(b);
+    });
+    row.appendChild(ages);
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'remove';
+    remove.innerHTML = '&times;';
+    remove.setAttribute('aria-label', 'Remove this person');
+    remove.addEventListener('click', () => {
+      people.splice(i, 1);
+      if (!people.some((p) => p.star)) ensureOneStar();
+      renderPeople();
+      renderPhotoSlots();
+    });
+    row.appendChild(remove);
+
+    const starRow = document.createElement('label');
+    starRow.className = 'star-row';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'starPerson';
+    radio.checked = person.star === true;
+    radio.addEventListener('change', () => {
+      people.forEach((p) => { p.star = false; });
+      person.star = true;
+      renderPeople();
+    });
+    starRow.appendChild(radio);
+    starRow.appendChild(starText);
+    row.appendChild(starRow);
+
+    rows.appendChild(row);
+  });
+
+  const addBtn = document.getElementById('addPersonBtn');
+  if (addBtn) addBtn.disabled = people.length >= maxPeople;
+  const hint = document.getElementById('peopleHint');
+  if (hint) {
+    hint.textContent = people.length >= maxPeople
+      ? 'That is the most we can draw well in one book - ' + maxPeople + ' people.'
+      : 'Up to ' + maxPeople + ' people. One photo each.';
+  }
+}
+
+// One labelled slot per person, in the same order the backend will be told.
+function renderPhotoSlots() {
+  const wrap = document.getElementById('familyUpload');
+  if (!wrap) return;
+  const named = people.filter((p) => p.name.trim());
+
+  if (bookMode !== 'family') { wrap.innerHTML = ''; return; }
+  if (!named.length) {
+    wrap.innerHTML = '<p class="people-hint">Add the names in step 1 first, then a photo slot appears for each person.</p>';
+    return;
+  }
+
+  const slots = document.createElement('div');
+  slots.className = 'photo-slots';
+
+  people.forEach((person, i) => {
+    if (!person.name.trim()) return;
+    const label = document.createElement('label');
+    label.className = 'photo-slot' + (person.dataUrl ? ' filled' : '');
+
+    const thumb = document.createElement('img');
+    thumb.className = 'thumb';
+    thumb.alt = '';
+    if (person.dataUrl) thumb.src = person.dataUrl;
+    label.appendChild(thumb);
+
+    const text = document.createElement('div');
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = person.name.trim() + (person.star ? ' - the book is for them' : '');
+    const state = document.createElement('div');
+    state.className = 'state';
+    state.textContent = person.dataUrl ? 'Photo added - tap to change' : 'Tap to add a photo of ' + person.name.trim();
+    text.appendChild(who);
+    text.appendChild(state);
+    label.appendChild(text);
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      state.textContent = 'Reading the photo...';
+      try {
+        const { blob, dataUrl } = await downscale(file);
+        person.file = new File([blob], 'person-' + (i + 1) + '.jpg', { type: 'image/jpeg' });
+        person.dataUrl = dataUrl;
+      } catch (err) {
+        state.textContent = 'That photo could not be read. Try another.';
+        return;
+      }
+      renderPhotoSlots();
+    });
+    label.appendChild(input);
+
+    slots.appendChild(label);
+  });
+
+  wrap.innerHTML = '';
+  wrap.appendChild(slots);
+}
+
+// Everyone who is ready to be drawn: named, with a photo, in order.
+function familyCast() {
+  return people.filter((p) => p.name.trim() && p.file);
+}
+
+function applyBookMode() {
+  const family = bookMode === 'family';
+  document.getElementById('onePersonPanel').style.display = family ? 'none' : '';
+  document.getElementById('familyPanel').style.display = family ? '' : 'none';
+  document.getElementById('singleUpload').style.display = family ? 'none' : '';
+  document.getElementById('familyUpload').style.display = family ? '' : 'none';
+  document.getElementById('uploadHeading').textContent = family ? 'Add a photo of each person' : 'Upload a photo';
+  // In a family book the story follows one person, and that name is the one the
+  // book is for - so the name field downstream is filled in from it.
+  const nameField = document.getElementById('childName').closest('.field');
+  if (nameField) nameField.style.display = family ? 'none' : '';
+  renderPeople();
+  renderPhotoSlots();
+}
+
+document.querySelectorAll('#bookModePicker .theme-pill').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#bookModePicker .theme-pill').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    bookMode = btn.dataset.mode;
+    if (bookMode === 'family' && people.length === 0) {
+      // Start with the shape most families have: a child the book is for, and
+      // a grown-up. Both still have to be named.
+      people = [newPerson('kid'), newPerson('adult')];
+    }
+    applyBookMode();
+  });
+});
+
+document.getElementById('addPersonBtn').addEventListener('click', () => {
+  if (people.length >= maxPeople) return;
+  people.push(newPerson('adult'));
+  renderPeople();
+  renderPhotoSlots();
+});
+
 let audience = 'kid';
 let childCount = 1;
 document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
@@ -750,7 +1069,16 @@ async function generateRange(from, to, file, opts) {
       currentAbortController = new AbortController();
       try {
         const form = new FormData();
-        form.append('photo', file);
+        // A family sends a photo per person plus the names, in the same order -
+        // that pairing is the only thing telling the drawing who is who.
+        if (opts.people && opts.people.length) {
+          opts.people.forEach((person) => form.append('photos', person.file));
+          form.append('people', JSON.stringify(opts.people.map((person) => ({
+            name: person.name.trim(), subjectType: person.subjectType, star: person.star === true
+          }))));
+        } else {
+          form.append('photo', file);
+        }
         form.append('theme', opts.theme);
         form.append('sceneIndex', i);
         form.append('childCount', opts.childCount);
@@ -814,14 +1142,40 @@ previewBtn.addEventListener('click', async () => {
   document.getElementById('childNameError').style.display = 'none';
   document.getElementById('emailError').style.display = 'none';
 
+  const peopleError = document.getElementById('peopleError');
+  peopleError.style.display = 'none';
+
   let ok = true;
-  if (!selectedFile) {
+  const cast = bookMode === 'family' ? familyCast() : [];
+
+  if (bookMode === 'family') {
+    // Refused here rather than at the backend, so nobody waits on a request
+    // that cannot work. Two people is what makes it a family book.
+    const named = people.filter((p) => p.name.trim());
+    if (named.length < 2) {
+      peopleError.textContent = 'Add at least two people - a child and a grown-up.';
+      peopleError.style.display = 'block';
+      ok = false;
+    } else if (cast.length !== named.length) {
+      const missing = named.filter((p) => !p.file).map((p) => p.name.trim());
+      peopleError.textContent = 'Still need a photo of ' + missing.join(' and ') + '.';
+      peopleError.style.display = 'block';
+      ok = false;
+    }
+  } else if (!selectedFile) {
     generateError.textContent = 'Upload a photo first.';
     generateError.style.display = 'block';
     ok = false;
   }
-  const childName = document.getElementById('childName').value.trim();
-  if (!childName) { document.getElementById('childNameError').style.display = 'block'; ok = false; }
+
+  // In a family book the name is whoever the story follows, taken from step 1.
+  const starPerson = cast.find((p) => p.star) || cast[0];
+  const childName = bookMode === 'family'
+    ? (starPerson ? starPerson.name.trim() : '')
+    : document.getElementById('childName').value.trim();
+  if (!childName && bookMode !== 'family') {
+    document.getElementById('childNameError').style.display = 'block'; ok = false;
+  }
   const email = document.getElementById('parentEmail').value.trim();
   if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
   if (!ok) return;
@@ -846,8 +1200,15 @@ previewBtn.addEventListener('click', async () => {
         thumb: null,
         pageCount: sceneCount,
         // The server keeps the photo so it can draw the book after payment
-        // without this browser needing to stay open.
-        photo: photoDataUrl,
+        // without this browser needing to stay open. A family book keeps one
+        // per person instead, in the order the pages introduce them.
+        photo: bookMode === 'family' ? null : photoDataUrl,
+        people: bookMode === 'family' ? cast.map((person) => ({
+          name: person.name.trim(),
+          subjectType: person.subjectType,
+          star: person.star === true,
+          photo: person.dataUrl
+        })) : [],
         subjectType: audience,
         // Carried on the order so the sale can be credited to its source even
         // though payment is confirmed minutes later, by Stripe, not by us.
@@ -864,6 +1225,7 @@ previewBtn.addEventListener('click', async () => {
 
     await generateRange(0, freePreviewPages, selectedFile, {
       theme: selectedTheme, childCount: childCount, audience: audience,
+      people: cast,
       notes: document.getElementById('notes').value.trim()
     });
 
