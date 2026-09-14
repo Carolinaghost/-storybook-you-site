@@ -339,6 +339,7 @@
     background: var(--paper); border: 1px solid var(--line);
   }
   .photo-slot .who { font-weight: 700; font-family: 'Baloo 2', sans-serif; }
+  .photo-slot .who.unnamed { color: var(--ink-soft); font-weight: 600; }
   .photo-slot .state { font-size: 13px; color: var(--ink-soft); }
   .photo-slot input[type="file"] { display: none; }
 
@@ -844,14 +845,18 @@ function renderPeople() {
 }
 
 // One labelled slot per person, in the same order the backend will be told.
+//
+// A slot appears for every person in step 1, named or not. It used to wait for
+// a name, which meant switching to a family book showed a heading, a sentence,
+// and nowhere to upload anything - the step looked broken. An unnamed slot says
+// "Person 2" until the name is typed, and then says the name.
 function renderPhotoSlots() {
   const wrap = document.getElementById('familyUpload');
   if (!wrap) return;
-  const named = people.filter((p) => p.name.trim());
 
   if (bookMode !== 'family') { wrap.innerHTML = ''; return; }
-  if (!named.length) {
-    wrap.innerHTML = '<p class="people-hint">Add the names in step 1 first, then a photo slot appears for each person.</p>';
+  if (!people.length) {
+    wrap.innerHTML = '<p class="people-hint">Add someone in step 1 and a photo slot appears for them.</p>';
     return;
   }
 
@@ -859,7 +864,6 @@ function renderPhotoSlots() {
   slots.className = 'photo-slots';
 
   people.forEach((person, i) => {
-    if (!person.name.trim()) return;
     const label = document.createElement('label');
     label.className = 'photo-slot' + (person.dataUrl ? ' filled' : '');
 
@@ -870,12 +874,17 @@ function renderPhotoSlots() {
     label.appendChild(thumb);
 
     const text = document.createElement('div');
+    const name = person.name.trim();
     const who = document.createElement('div');
-    who.className = 'who';
-    who.textContent = person.name.trim() + (person.star ? ' - the book is for them' : '');
+    who.className = 'who' + (name ? '' : ' unnamed');
+    who.textContent = (name || 'Person ' + (i + 1)) + (person.star && name ? ' - the book is for them' : '');
     const state = document.createElement('div');
     state.className = 'state';
-    state.textContent = person.dataUrl ? 'Photo added - tap to change' : 'Tap to add a photo of ' + person.name.trim();
+    // A photo with no name attached is the one case that would otherwise be
+    // dropped quietly, so the slot says what is still missing.
+    state.textContent = person.dataUrl
+      ? (name ? 'Photo added - tap to change' : 'Photo added - now give them a name in step 1')
+      : (name ? 'Tap to add a photo of ' + name : 'Tap to add their photo');
     text.appendChild(who);
     text.appendChild(state);
     label.appendChild(text);
@@ -1186,7 +1195,16 @@ previewBtn.addEventListener('click', async () => {
     // Refused here rather than at the backend, so nobody waits on a request
     // that cannot work. Two people is what makes it a family book.
     const named = people.filter((p) => p.name.trim());
-    if (named.length < 2) {
+    // A photo sitting in a slot with no name is dropped from the cast, so say
+    // so rather than telling someone who has added two photos to add people.
+    const photoNoName = people.filter((p) => p.file && !p.name.trim());
+    if (photoNoName.length) {
+      peopleError.textContent = photoNoName.length === 1
+        ? 'One photo has no name yet. Add the name in step 1 so we know who it is.'
+        : photoNoName.length + ' photos have no name yet. Add their names in step 1 so we know who they are.';
+      peopleError.style.display = 'block';
+      ok = false;
+    } else if (named.length < 2) {
       peopleError.textContent = 'Add at least two people - a child and a grown-up.';
       peopleError.style.display = 'block';
       ok = false;
