@@ -516,7 +516,7 @@
         You have seen <span id="previewCountText">2</span> pages free. Unlock all <span id="totalCountText">15</span>
         and download the whole book as a print-ready PDF.
       </p>
-      <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;">$15</p>
+      <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;" id="priceText">$15</p>
       <button type="button" class="submit-btn" id="unlockBtn" style="margin-top:0;">Unlock all pages</button>
       <div class="error-text" id="payError">Could not start checkout.</div>
       <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">Secure checkout by Stripe. Card details never touch our server.</p>
@@ -706,13 +706,31 @@ let people = [];                // { name, subjectType, star, file, dataUrl }
 
 // The backend publishes its own limits so this page does not keep a second copy
 // that can drift. A failure here is not worth blocking an order over.
+let priceCents = 1500;
+let familyPriceCents = 1500;
+
+// What the paywall says has to be what Stripe charges. Both numbers come from
+// the backend rather than being written into this page twice, because a family
+// book costs more than a single one and a page showing the old price would be
+// quoting a customer something we do not then charge them.
+function showPrice() {
+  const el = document.getElementById('priceText');
+  if (!el) return;
+  const cents = bookMode === 'family' ? familyPriceCents : priceCents;
+  el.textContent = '$' + (cents % 100 === 0 ? cents / 100 : (cents / 100).toFixed(2));
+}
+
 fetch(BACKEND_URL + '/options')
   .then((r) => (r.ok ? r.json() : null))
   .then((opts) => {
-    if (opts && opts.family && opts.family.maxPeople) {
+    if (!opts) return;
+    if (opts.priceCents) priceCents = opts.priceCents;
+    if (opts.family && opts.family.priceCents) familyPriceCents = opts.family.priceCents;
+    if (opts.family && opts.family.maxPeople) {
       maxPeople = opts.family.maxPeople;
       renderPeople();
     }
+    showPrice();
   })
   .catch(() => {});
 
@@ -891,6 +909,7 @@ function applyBookMode() {
   if (nameField) nameField.style.display = family ? 'none' : '';
   renderPeople();
   renderPhotoSlots();
+  showPrice();
 }
 
 document.querySelectorAll('#bookModePicker .theme-pill').forEach((btn) => {
