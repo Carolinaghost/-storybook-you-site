@@ -1,0 +1,30 @@
+{
+  "base": "/samples/scatter/",
+  "pages": [
+    "dogwalk-p02.webp",
+    "dogwalk-p04.webp",
+    "dogwalk-p06.webp",
+    "dogwalk-p11.webp",
+    "dogwalk-p13.webp",
+    "malik-p01.webp",
+    "malik-p04.webp",
+    "malik-p07.webp",
+    "malik-p10.webp",
+    "malik-p13.webp",
+    "mei-p01.webp",
+    "mei-p03.webp",
+    "mei-p06.webp",
+    "mei-p11.webp",
+    "mei-p14.webp",
+    "owen-p01.webp",
+    "owen-p04.webp",
+    "owen-p07.webp",
+    "owen-p10.webp",
+    "owen-p13.webp",
+    "rail-01.webp",
+    "rail-04.webp",
+    "rail-06.webp",
+    "rail-10.webp",
+    "rail-12.webp"
+  ]
+}
