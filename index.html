@@ -35,7 +35,7 @@
 <meta name="msvalidate.01" content="524D9F97AEDC40A4EBBEB9C22BC93A7C" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
@@ -50,6 +50,10 @@
     --green: #4C8C5B;
     --line: #DCD2B8;
     --danger: #C1432B;
+    /* Straight off the logo kit, so the name in the header and the name in the
+       favicon are the same two colours. */
+    --brand-ink: #242636;
+    --brand-coral: #E85D4A;
   }
   * { box-sizing: border-box; }
   body {
@@ -72,8 +76,6 @@
     background-size: auto, auto, auto, 300px 300px;
   }
 
-  /* Lift the header off the new background a little. */
-  .brand { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
   .page { box-shadow: 0 6px 22px rgba(42, 39, 36, 0.06); }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -81,9 +83,77 @@
   }
   .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
   h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
-  header { text-align: center; margin-bottom: 36px; }
-  .brand { font-size: 40px; color: var(--blue-dark); }
+  header { text-align: center; margin-bottom: 36px; padding-top: 6px; }
   .tagline { color: var(--ink-soft); font-size: 17px; margin-top: 8px; }
+
+  /* ---- the wordmark ----
+     The name is a coloring page halfway through being coloured: hollow bubble
+     letters, filled in from the left as far as the pencil has got. It says what
+     the product does before a word of the tagline is read.
+
+     Two stacked copies of the same text. The lower one is hollow outline, the
+     upper one is coral and clipped to wherever the pencil has reached. The
+     second copy is aria-hidden so it is not announced twice. */
+  .brand {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: clamp(40px, 11vw, 56px);
+    line-height: 1.06;
+    letter-spacing: 0.5px;
+  }
+  .wordmark { position: relative; display: inline-block; }
+  /* Room above for the pencil, which reaches over the cap line. */
+  .wordmark .letters { display: block; padding-top: 0.62em; }
+  .wordmark .colored {
+    position: absolute;
+    left: 0; top: 0;
+    /* 58% lands the boundary just after "Crayon", so the eye reads a word
+       being finished rather than a word cut in half. */
+    clip-path: inset(0 42% 0 0);
+    color: var(--brand-coral);
+  }
+
+  /* Without text-stroke the hollow copy would be invisible, so the outline
+     treatment is only applied where it is actually supported. Everywhere else
+     the name is simply solid ink - plain, but never missing. */
+  .brand { color: var(--brand-ink); }
+  @supports (-webkit-text-stroke: 1px black) {
+    .wordmark .letters { -webkit-text-stroke: 3px var(--brand-ink); paint-order: stroke fill; }
+    .wordmark .uncolored { color: transparent; }
+  }
+
+  /* Small enough to sit on the letters rather than bury them, and shifted back
+     by half its own width so the nib - not the pencil's left edge - is what
+     lands on the boundary. */
+  .wordmark .pencil {
+    position: absolute;
+    left: 58%;
+    /* Nib resting on the cap line, body angled up and away, so the pencil never
+       sits over a letter - the word stays readable at a glance, which matters
+       more than the pencil does. */
+    bottom: 0.60em;
+    width: 0.30em;
+    height: auto;
+    transform: translateX(-54%) rotate(18deg);
+    transform-origin: 50% 92%;
+    pointer-events: none;
+  }
+
+  /* Drawn in once on arrival, then left alone - a loop would pull the eye off
+     the page every few seconds. The fill and the pencil are separate elements,
+     so they share a duration and an easing curve to stay together. */
+  @media (prefers-reduced-motion: no-preference) {
+    .wordmark .colored { animation: wm-fill 1.5s cubic-bezier(.33,.1,.24,1) .25s backwards; }
+    .wordmark .pencil  { animation: wm-draw 1.5s cubic-bezier(.33,.1,.24,1) .25s backwards; }
+  }
+  @keyframes wm-fill {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 42% 0 0); }
+  }
+  @keyframes wm-draw {
+    from { left: 0%; }
+    to   { left: 58%; }
+  }
 
   .page {
     background: var(--card);
@@ -454,7 +524,19 @@
 <div class="wrap">
 
   <header>
-    <div class="brand">Crayonauts</div>
+    <div class="brand">
+      <span class="wordmark">
+        <span class="letters uncolored">Crayonauts</span>
+        <span class="letters colored" aria-hidden="true">Crayonauts</span>
+        <svg class="pencil" viewBox="0 0 30 88" aria-hidden="true" focusable="false">
+          <path d="M9 4h12a4 4 0 0 1 4 4v46H5V8a4 4 0 0 1 4-4z" fill="var(--brand-ink)"/>
+          <rect x="5" y="50" width="20" height="6" fill="#FDF8F0"/>
+          <path d="M5 56h20l-7.8 24a2.2 2.2 0 0 1-4.4 0z" fill="#FDF8F0"
+                stroke="var(--brand-ink)" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M12.4 73h5.2L15 81z" fill="var(--brand-coral)"/>
+        </svg>
+      </span>
+    </div>
     <div class="tagline">Turn your kid's photo into a coloring book starring them</div>
   </header>
 
