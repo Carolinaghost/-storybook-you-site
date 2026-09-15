@@ -28,7 +28,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon_1.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper: #FBF6EA;
@@ -39,9 +39,6 @@
     --blue-dark: #1F4479;
     --orange: #E8622C;
     --line: #DCD2B8;
-    /* Same two colours as the logo and the homepage header. */
-    --brand-ink: #242636;
-    --brand-coral: #E85D4A;
   }
   * { box-sizing: border-box; }
   body {
@@ -53,63 +50,9 @@
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
   h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
-  header { text-align: center; margin-bottom: 28px; padding-top: 6px; }
-
-  /* ---- the wordmark, as on the homepage ----
-     Hollow bubble letters coloured in from the left as far as the pencil has
-     got. Here it is also the link home, so hovering finishes the colouring:
-     the fill runs to the end and the pencil goes with it. That is the hover
-     state doing double duty - it says "clickable" without an underline. */
-  .brand {
-    font-family: 'Baloo 2', sans-serif;
-    font-weight: 800;
-    font-size: clamp(32px, 9vw, 40px);
-    line-height: 1.06;
-    letter-spacing: 0.5px;
-    color: var(--brand-ink);
-  }
-  .brand a { color: inherit; text-decoration: none; display: inline-block; }
-  .wordmark { position: relative; display: inline-block; }
-  .wordmark .letters { display: block; padding-top: 0.62em; }
-  .wordmark .colored {
-    position: absolute;
-    left: 0; top: 0;
-    clip-path: inset(0 42% 0 0);
-    color: var(--brand-coral);
-  }
-  @supports (-webkit-text-stroke: 1px black) {
-    .wordmark .letters { -webkit-text-stroke: 3px var(--brand-ink); paint-order: stroke fill; }
-    .wordmark .uncolored { color: transparent; }
-  }
-  .wordmark .pencil {
-    position: absolute;
-    left: 58%;
-    bottom: 0.60em;
-    width: 0.30em;
-    height: auto;
-    transform: translateX(-54%) rotate(18deg);
-    transform-origin: 50% 92%;
-    pointer-events: none;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .wordmark .colored { animation: wm-fill 1.5s cubic-bezier(.33,.1,.24,1) .25s backwards; }
-    .wordmark .pencil  { animation: wm-draw 1.5s cubic-bezier(.33,.1,.24,1) .25s backwards; }
-    .wordmark .colored,
-    .wordmark .pencil { transition: clip-path .45s ease, left .45s ease; }
-    .brand a:hover .colored,
-    .brand a:focus-visible .colored { clip-path: inset(0 0 0 0); }
-    .brand a:hover .pencil,
-    .brand a:focus-visible .pencil { left: 100%; }
-  }
-  @keyframes wm-fill {
-    from { clip-path: inset(0 100% 0 0); }
-    to   { clip-path: inset(0 42% 0 0); }
-  }
-  @keyframes wm-draw {
-    from { left: 0%; }
-    to   { left: 58%; }
-  }
+  header { text-align: center; margin-bottom: 28px; }
+  .brand { font-size: 34px; color: var(--blue-dark); }
+  .brand a { color: inherit; text-decoration: none; }
   .updated { color: var(--ink-soft); font-size: 14px; margin-top: 6px; }
 
   nav.jump {
@@ -144,19 +87,7 @@
 <div class="wrap">
 
   <header>
-    <div class="brand"><a href="/">
-      <span class="wordmark">
-        <span class="letters uncolored">Crayonauts</span>
-        <span class="letters colored" aria-hidden="true">Crayonauts</span>
-        <svg class="pencil" viewBox="0 0 30 88" aria-hidden="true" focusable="false">
-          <path d="M9 4h12a4 4 0 0 1 4 4v46H5V8a4 4 0 0 1 4-4z" fill="var(--brand-ink)"/>
-          <rect x="5" y="50" width="20" height="6" fill="#FDF8F0"/>
-          <path d="M5 56h20l-7.8 24a2.2 2.2 0 0 1-4.4 0z" fill="#FDF8F0"
-                stroke="var(--brand-ink)" stroke-width="3" stroke-linejoin="round"/>
-          <path d="M12.4 73h5.2L15 81z" fill="var(--brand-coral)"/>
-        </svg>
-      </span>
-    </a></div>
+    <div class="brand"><a href="/">Crayonauts</a></div>
     <div class="updated">Policies &middot; last updated 12 September 2026</div>
   </header>
 
