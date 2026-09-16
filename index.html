@@ -36,7 +36,6 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --paper: #FBF6EA;
@@ -717,6 +716,7 @@
       <p id="confirmText"></p>
       <p id="leaveNote" class="leave-note" style="display:none;"></p>
       <button type="button" class="submit-btn" id="downloadBtn" style="margin-top:14px; display:none;">Download the book (PDF)</button>
+      <div class="error-text" id="downloadError"></div>
     </div>
 
   </div>
@@ -1642,26 +1642,48 @@ async function resumeAfterPayment(returnedId) {
     "Your payment went through and your book is being made. We've emailed you a link to it - open that link to download it when it's ready.";
 }
 
-document.getElementById('downloadBtn').addEventListener('click', () => {
-  const jsPDF = window.jspdf.jsPDF;
-  const doc = new jsPDF({ unit: 'in', format: [8.5, 8.5] });
-  const childName = document.getElementById('childName').value.trim() || 'My';
+// The book is built on the server now, and this asks for that same file - the
+// one the email attaches, with the child's drawing on the cover. There is one
+// book; this is a second way to get it, not a second copy of it.
+//
+// The browser used to assemble its own with jsPDF out of the full-colour page
+// images it had already loaded. That came to about 18MB, took a noticeable
+// pause on a phone, and - once the server cover changed - was a different book
+// from the one in the customer's inbox.
+document.getElementById('downloadBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('downloadBtn');
+  const err = document.getElementById('downloadError');
+  if (!orderId || !accessToken) return;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(26);
-  doc.text(childName + "'s", 4.25, 3.6, { align: 'center' });
-  doc.text(selectedTheme + ' Story', 4.25, 4.3, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-  doc.text('A custom coloring book', 4.25, 5, { align: 'center' });
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Fetching your book...';
+  err.style.display = 'none';
 
-  storyPages.forEach(img => {
-    if (!img) return;
-    doc.addPage([8.5, 8.5]);
-    doc.addImage(img, 'PNG', 0.25, 0.25, 8, 8);
-  });
+  try {
+    const res = await fetch(BACKEND_URL + '/orders/' + orderId + '/book.pdf?token='
+      + encodeURIComponent(accessToken));
+    if (!res.ok) throw new Error('We could not put the book together just then. Try again in a moment.');
+    const blob = await res.blob();
 
-  doc.save(childName.replace(/[^a-z0-9]/gi, '-') + '-coloring-book.pdf');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (document.getElementById('childName').value.trim() || 'My')
+      .replace(/[^a-z0-9]/gi, '-') + '-coloring-book.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Not revoked immediately: some browsers have not finished reading the blob
+    // when click() returns, and pulling it away cancels the download.
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch (e) {
+    err.textContent = e.message || 'The download did not work. Try again in a moment.';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
 });
 
 // Opening the link we emailed: ?order=N#t=TOKEN
