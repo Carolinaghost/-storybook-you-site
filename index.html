@@ -200,6 +200,11 @@
   }
   .theme-pill.active { border-color: var(--orange); color: var(--orange); background: #FDF0EA; }
 
+  /* The detail pills carry the age band under the word, so nobody has to guess
+     what "Standard" means - and so the word itself stays the label. */
+  #detailPicker .theme-pill { line-height: 1.25; text-align: center; }
+  #detailPicker .ages { display: block; font-weight: 400; font-size: 12px; opacity: .75; }
+
   label.field { display: block; margin-bottom: 16px; }
   label.field span { display: block; font-weight: 700; font-size: 14px; margin-bottom: 6px; font-family: 'Baloo 2', sans-serif; }
   input[type=text], input[type=email], textarea {
@@ -674,6 +679,20 @@
       <input type="text" id="childName" placeholder="Ava">
       <div class="error-text" id="childNameError">Enter the child's name.</div>
     </label>
+    <!-- Not "how old is the child in the photo". The drawing always looks like
+         whoever is in the photo; this only decides how much is in the picture,
+         so it is worded around the person holding the crayon. Shown in both
+         flows - a family book hides the name field above but still needs
+         this. -->
+    <div style="margin-bottom:16px;">
+      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:4px; font-family:'Baloo 2', sans-serif;">Who's coloring it?</span>
+      <p class="step-desc" style="margin-top:0; margin-bottom:8px;">This only changes how busy the pages are. The drawings still look like the people in your photos.</p>
+      <div class="themes" id="detailPicker">
+        <button type="button" class="theme-pill" data-detail="simple">Simple<span class="ages">ages 3-4</span></button>
+        <button type="button" class="theme-pill active" data-detail="standard">Standard<span class="ages">ages 5-7</span></button>
+        <button type="button" class="theme-pill" data-detail="detailed">Detailed<span class="ages">ages 8+</span></button>
+      </div>
+    </div>
     <label class="field">
       <span>Your email</span>
       <input type="email" id="parentEmail" placeholder="name@email.com">
@@ -1132,6 +1151,25 @@ document.getElementById('addPersonBtn').addEventListener('click', () => {
   renderPeople();
 });
 
+// How busy the pages are. Never empty: a book sent without one is a book drawn
+// at whatever busyness the model felt like that minute, which is the thing this
+// picker exists to stop.
+let detailLevel = 'standard';
+document.querySelectorAll('#detailPicker .theme-pill').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#detailPicker .theme-pill').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    detailLevel = btn.dataset.detail;
+  });
+});
+function showDetailLevel(level) {
+  const pill = document.querySelector('#detailPicker .theme-pill[data-detail="' + level + '"]');
+  if (!pill) return;
+  document.querySelectorAll('#detailPicker .theme-pill').forEach((b) => b.classList.remove('active'));
+  pill.classList.add('active');
+  detailLevel = level;
+}
+
 let audience = 'kid';
 let childCount = 1;
 document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
@@ -1206,7 +1244,7 @@ let accessToken = null;
 function saveState() {
   try {
     localStorage.setItem(STATE_KEY, JSON.stringify({
-      orderId, accessToken, photoDataUrl, selectedTheme, childCount, audience,
+      orderId, accessToken, photoDataUrl, selectedTheme, childCount, audience, detailLevel,
       notes: document.getElementById('notes').value.trim(),
       childName: document.getElementById('childName').value.trim(),
       email: document.getElementById('parentEmail').value.trim()
@@ -1301,6 +1339,7 @@ async function generateRange(from, to, file, opts) {
         form.append('sceneIndex', i);
         form.append('childCount', opts.childCount);
         form.append('subjectType', opts.audience);
+        form.append('detailLevel', opts.detailLevel || 'standard');
         form.append('notes', opts.notes || '');
         if (orderId) form.append('orderId', orderId);
         if (accessToken) form.append('token', accessToken);
@@ -1437,6 +1476,7 @@ previewBtn.addEventListener('click', async () => {
           photo: person.dataUrl
         })) : [],
         subjectType: audience,
+        detailLevel: detailLevel,
         // Carried on the order so the sale can be credited to its source even
         // though payment is confirmed minutes later, by Stripe, not by us.
         visitor: visitorId,
@@ -1452,6 +1492,7 @@ previewBtn.addEventListener('click', async () => {
 
     await generateRange(0, freePreviewPages, selectedFile, {
       theme: selectedTheme, childCount: childCount, audience: audience,
+      detailLevel: detailLevel,
       people: cast,
       notes: document.getElementById('notes').value.trim()
     });
@@ -1632,6 +1673,7 @@ async function resumeAfterPayment(returnedId) {
     if (st.childName) document.getElementById('childName').value = st.childName;
     if (st.email) document.getElementById('parentEmail').value = st.email;
     if (st.notes) document.getElementById('notes').value = st.notes;
+    if (st.detailLevel) showDetailLevel(st.detailLevel);
     selectedTheme = st.selectedTheme || selectedTheme;
     return watchOrder(st.orderId, st.accessToken);
   }
@@ -1711,6 +1753,7 @@ async function openFromLink(id, token) {
       document.getElementById('childName').value = st.childName || '';
       document.getElementById('parentEmail').value = st.email || '';
       document.getElementById('notes').value = st.notes || '';
+      if (st.detailLevel) showDetailLevel(st.detailLevel);
     }
     generateError.textContent = 'Checkout was canceled - nothing was charged. Your preview is still here whenever you want to finish.';
     generateError.style.display = 'block';
