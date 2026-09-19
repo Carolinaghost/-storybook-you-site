@@ -753,6 +753,48 @@
 <script>
 const BACKEND_URL = 'https://api.crayonauts.com';
 
+// --- Creator links ---------------------------------------------------------
+// A creator posts crayonauts.com/?c=THEIRCODE. The code is remembered here and
+// sent with the checkout, so their audience never has to type anything and the
+// sale is attributed to them automatically.
+//
+// It is kept in localStorage because the visit and the purchase are rarely the
+// same moment - somebody clicks the link, uploads a photo, looks at the free
+// pages, and buys twenty minutes later, possibly after a reload. Losing the
+// code anywhere in there means the creator is not paid for a sale they made.
+//
+// Last link wins: if somebody arrives through a second creator later, that is
+// who sent them this time.
+const REF_KEY = 'crayonauts_ref';
+
+function rememberCreatorCode() {
+  try {
+    const url = new URLSearchParams(location.search);
+    const raw = (url.get('c') || url.get('code') || '').trim().toUpperCase();
+    // Same shape the server will accept. Anything else is a mangled link, and
+    // storing it would only overwrite a good code with a broken one.
+    if (raw && raw.length <= 64 && /^[A-Z0-9_-]+$/.test(raw)) {
+      localStorage.setItem(REF_KEY, raw);
+    }
+  } catch (e) {
+    // Private browsing refuses storage. The sale still happens; the creator
+    // only keeps the credit if the visitor buys in this same page view.
+  }
+}
+
+function creatorCode() {
+  try {
+    const url = new URLSearchParams(location.search);
+    const raw = (url.get('c') || url.get('code') || '').trim().toUpperCase();
+    if (raw && /^[A-Z0-9_-]+$/.test(raw)) return raw;
+    return localStorage.getItem(REF_KEY) || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+rememberCreatorCode();
+
 // --- Funnel counters -------------------------------------------------------
 // How many people land, how many upload, how many pay. Deliberately anonymous:
 // the visitor id below is a random number living in this variable and nowhere
@@ -1527,7 +1569,7 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
     const r = await fetch(BACKEND_URL + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital' })
+      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital', code: creatorCode() })
     });
     const d = await r.json();
     if (!r.ok || !d.url) throw new Error(d.detail || d.error || 'Checkout could not be started.');
