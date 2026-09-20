@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Become a Crayonauts creator</title>
+<meta name="description" content="Get your own Crayonauts code and link, and earn 25% of every coloring book bought through them. Takes a minute, and your code arrives by email straight away.">
+<link rel="canonical" href="https://crayonauts.com/creators.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Crayonauts">
+<meta property="og:title" content="Become a Crayonauts creator">
+<meta property="og:description" content="Your own code and link, and 25% of every book bought through them.">
+<meta property="og:url" content="https://crayonauts.com/creators.html">
+<meta property="og:image" content="https://crayonauts.com/og-image_1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Become a Crayonauts creator">
+<meta name="twitter:description" content="Your own code and link, and 25% of every book bought through them.">
+<meta name="twitter:image" content="https://crayonauts.com/og-image_1.png">
+
+<link rel="icon" href="/favicon-32_1.png" sizes="32x32">
+<link rel="icon" href="/favicon-16_1.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon_1.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF6EA;
+    --card: #FFFFFF;
+    --ink: #2A2724;
+    --ink-soft: #6B6357;
+    --blue: #2F5FA8;
+    --blue-dark: #1F4479;
+    --orange: #E8622C;
+    --green: #4C8C5B;
+    --line: #DCD2B8;
+    --danger: #C1432B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
+  header { text-align: center; margin-bottom: 28px; }
+  .brand { font-size: 34px; color: var(--blue-dark); }
+  .brand a { color: inherit; text-decoration: none; }
+
+  .hero { text-align: center; margin-bottom: 26px; }
+  .hero h1 { font-size: 34px; color: var(--blue-dark); line-height: 1.2; }
+  .hero p { color: var(--ink-soft); margin: 10px 0 0; }
+
+  .terms {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 24px;
+  }
+  .term {
+    background: var(--card); border: 2px dashed var(--line); border-radius: 16px;
+    padding: 16px 12px; text-align: center;
+  }
+  .term b { display: block; font-family: 'Baloo 2', sans-serif; font-size: 26px; color: var(--orange); }
+  .term span { font-size: 13px; color: var(--ink-soft); }
+  @media (max-width: 520px) { .terms { grid-template-columns: 1fr; } .term { text-align: left; display: flex; align-items: baseline; gap: 10px; } }
+
+  section {
+    background: var(--card); border: 2px dashed var(--line);
+    border-radius: 18px; padding: 26px; margin-bottom: 22px;
+  }
+  section h2 { font-size: 24px; color: var(--blue-dark); margin-bottom: 8px; }
+  p { margin: 10px 0; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 6px 0; }
+  a { color: var(--blue); }
+
+  label.field { display: block; margin-bottom: 16px; }
+  label.field > span {
+    display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px;
+    font-family: 'Baloo 2', sans-serif;
+  }
+  input {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: 'Karla', sans-serif;
+    border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+  }
+  input:focus { outline: none; border-color: var(--blue); }
+  .hint { font-size: 13px; color: var(--ink-soft); margin: -10px 0 16px; }
+  .error-text { display: none; color: var(--danger); font-size: 14px; margin-top: 4px; font-weight: 700; }
+  .error-text.show { display: block; }
+
+  button.go {
+    width: 100%; padding: 15px 22px; font-size: 18px; font-weight: 700;
+    font-family: 'Baloo 2', sans-serif; color: #fff; background: var(--orange);
+    border: none; border-radius: 12px; cursor: pointer;
+  }
+  button.go:hover { background: #cf5324; }
+  button.go[disabled] { background: var(--ink-soft); cursor: default; }
+
+  /* The success panel. Deliberately loud: the code is the whole reason they
+     came, and it is also the one thing the email might fail to deliver. */
+  #done { display: none; }
+  .codebox {
+    background: #F6F4EF; border-radius: 12px; padding: 18px; margin: 18px 0; text-align: center;
+  }
+  .codebox .label { font-size: 13px; color: var(--ink-soft); }
+  .codebox .code {
+    font-family: 'Baloo 2', sans-serif; font-size: 32px; font-weight: 800;
+    letter-spacing: 2px; color: var(--blue-dark); word-break: break-all;
+  }
+  .codebox .link { font-size: 15px; word-break: break-all; }
+
+  .site-footer {
+    text-align: center; margin-top: 30px; font-size: 14px; color: var(--ink-soft);
+  }
+  .site-footer a { margin: 0 8px; }
+  .site-footer .entity { display: block; margin-top: 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand"><a href="/">Crayonauts</a></div>
+  </header>
+
+  <div class="hero">
+    <h1>Get paid for sending people here</h1>
+    <p>Your own code and your own link. Your audience pays the same price either way.</p>
+  </div>
+
+  <div class="terms">
+    <div class="term"><b>25%</b><span>of every book bought through you</span></div>
+    <div class="term"><b>$0</b><span>to join, and nothing to buy</span></div>
+    <div class="term"><b>Weekly</b><span>paid out every Thursday</span></div>
+  </div>
+
+  <section>
+    <h2>How it works</h2>
+    <ul>
+      <li>Fill this in. Your code is made straight away and emailed to you.</li>
+      <li>Post your link, or say your code out loud &mdash; both track back to you.</li>
+      <li>The pay week runs Thursday morning to Wednesday night, US Eastern.</li>
+      <li>You&rsquo;ll get a separate invite to set up how you get paid. Your tax form and bank details go there, never by email.</li>
+    </ul>
+  </section>
+
+  <section id="form">
+    <h2>Sign up</h2>
+
+    <label class="field">
+      <span>Your name</span>
+      <input type="text" id="name" autocomplete="name" placeholder="Jerrell Crump">
+      <div class="error-text" id="nameError">Tell us your name.</div>
+    </label>
+
+    <label class="field">
+      <span>Your email</span>
+      <input type="email" id="email" autocomplete="email" placeholder="name@email.com">
+      <div class="error-text" id="emailError">We need an email that works &mdash; your code is sent there.</div>
+    </label>
+
+    <label class="field">
+      <span>Where do you post?</span>
+      <input type="text" id="handle" placeholder="@yourname on TikTok">
+      <div class="error-text" id="handleError">Tell us where you post.</div>
+    </label>
+
+    <label class="field">
+      <span>How many followers? <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></span>
+      <input type="text" id="followers" placeholder="About 40k">
+    </label>
+
+    <label class="field">
+      <span>Want a particular code? <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></span>
+      <input type="text" id="codeWord" placeholder="Leave blank and we'll use your name" maxlength="20">
+    </label>
+    <p class="hint">Letters and numbers only. If it&rsquo;s taken we&rsquo;ll give you the nearest one free.</p>
+
+    <button class="go" id="goBtn" type="button">Get my code</button>
+    <div class="error-text" id="formError"></div>
+  </section>
+
+  <section id="done">
+    <h2 id="doneTitle">You&rsquo;re in</h2>
+    <p id="doneLead">Here&rsquo;s your code. We&rsquo;ve emailed it to you as well.</p>
+
+    <div class="codebox">
+      <div class="label">Your code</div>
+      <div class="code" id="outCode"></div>
+      <div class="label" style="margin-top:14px;">Your link</div>
+      <div class="link"><a id="outLink" href="#"></a></div>
+    </div>
+
+    <p>Either one works. The link is for your bio; the code is for when somebody is reading your caption or hearing you say it. Neither one changes the price your audience pays.</p>
+    <p>Next you&rsquo;ll get a separate invite to set up how you get paid. That&rsquo;s where your tax form and bank details go &mdash; please don&rsquo;t send those by email.</p>
+    <p style="font-size:14px;color:var(--ink-soft);">Didn&rsquo;t get the email? Check spam, then write to <a href="mailto:admin@crayonauts.com">admin@crayonauts.com</a>.</p>
+  </section>
+
+  <footer class="site-footer">
+    <a href="/">Home</a>
+    <a href="legal.html#privacy">Privacy</a>
+    <a href="legal.html#terms">Terms</a>
+    <a href="mailto:admin@crayonauts.com">Contact</a>
+    <span class="entity">Crayonauts is a service of Comfort Systems of America INC</span>
+  </footer>
+
+</div>
+
+<script>
+const BACKEND_URL = 'https://api.crayonauts.com';
+
+function show(id, on) {
+  document.getElementById(id).classList.toggle('show', on);
+}
+
+function setError(id, message) {
+  const el = document.getElementById(id);
+  if (message) el.textContent = message;
+  el.classList.add('show');
+}
+
+// Checked here as well as on the server, and the server is the one that
+// counts. This is only so somebody does not wait on a round trip to be told
+// they left the name blank.
+function looksLikeEmail(v) {
+  return /^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(String(v || '').trim());
+}
+
+async function submit() {
+  const btn = document.getElementById('goBtn');
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const handle = document.getElementById('handle').value.trim();
+  const followers = document.getElementById('followers').value.trim();
+  const codeWord = document.getElementById('codeWord').value.trim();
+
+  ['nameError', 'emailError', 'handleError', 'formError'].forEach((id) => show(id, false));
+
+  let bad = false;
+  if (name.length < 2) { show('nameError', true); bad = true; }
+  if (!looksLikeEmail(email)) { show('emailError', true); bad = true; }
+  if (handle.length < 2) { show('handleError', true); bad = true; }
+  if (bad) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Making your code...';
+
+  try {
+    const resp = await fetch(BACKEND_URL + '/creators', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, handle, followers, codeWord, platform: '' })
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      setError('formError', body.error || 'Something went wrong. Try again in a minute.');
+      btn.disabled = false;
+      btn.textContent = 'Get my code';
+      return;
+    }
+
+    document.getElementById('outCode').textContent = body.code;
+    const link = document.getElementById('outLink');
+    link.href = body.link;
+    link.textContent = body.link;
+
+    // Somebody who already signed up is usually here because they lost the
+    // email. Say so, rather than letting them think a second code was made.
+    if (body.alreadySignedUp) {
+      document.getElementById('doneTitle').textContent = 'You already have one';
+      document.getElementById('doneLead').textContent =
+        'This email is already signed up, so here is the code you were given.';
+    }
+
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('done').style.display = 'block';
+    document.getElementById('done').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    setError('formError', 'Could not reach us just now. Check your connection and try again.');
+    btn.disabled = false;
+    btn.textContent = 'Get my code';
+  }
+}
+
+document.getElementById('goBtn').addEventListener('click', submit);
+document.querySelectorAll('#form input').forEach((input) => {
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+});
+</script>
+</body>
+</html>
