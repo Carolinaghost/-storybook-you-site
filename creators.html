@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Become a Crayonauts creator</title>
-<meta name="description" content="Get your own Crayonauts code and link, and earn 20% of every coloring book bought through them. Takes a minute, and your code arrives by email straight away.">
+<meta name="description" content="Get your own Crayonauts code and link, a free book on us, and 20% of every coloring book bought through them. Takes a minute, and it all arrives by email straight away.">
 <link rel="canonical" href="https://crayonauts.com/creators.html">
 
 <meta property="og:type" content="website">
@@ -136,14 +136,14 @@
 
   <div class="terms">
     <div class="term"><b>20%</b><span>of every book bought through you</span></div>
-    <div class="term"><b>$0</b><span>to join, and nothing to buy</span></div>
+    <div class="term"><b>Free book</b><span>one on us, so you can see it first</span></div>
     <div class="term"><b>Weekly</b><span>paid out every Friday</span></div>
   </div>
 
   <section>
     <h2>How it works</h2>
     <ul>
-      <li>Fill this in. Your code is made straight away and emailed to you.</li>
+      <li>Fill this in. Your code, your link and a free book are made straight away and emailed to you.</li>
       <li>Post your link, or say your code out loud &mdash; both track back to you.</li>
       <li>The pay week runs Thursday morning to Wednesday night, US Eastern. Whatever sold in that week is paid the Friday after it closes.</li>
       <li>You&rsquo;ll get a separate invite to set up how you get paid. Your tax form and bank details go there, never by email.</li>
@@ -195,6 +195,14 @@
       <div class="code" id="outCode"></div>
       <div class="label" style="margin-top:14px;">Your link</div>
       <div class="link"><a id="outLink" href="#"></a></div>
+    </div>
+
+    <!-- Shown only when Stripe actually minted one. A box promising a free
+         book with nothing in it is worse than no box. -->
+    <div class="codebox" id="freeBox" style="display:none; background:#FFF4E8; text-align:left;">
+      <div class="label"><strong>And your free book, on us.</strong></div>
+      <div style="margin-top:4px;">Use <strong id="outFreeCode" style="letter-spacing:1px;"></strong>
+      at checkout. It works once, it never expires, and it takes the price to zero.</div>
     </div>
 
     <p>Either one works. The link is for your bio; the code is for when somebody is reading your caption or hearing you say it. Neither one changes the price your audience pays.</p>
@@ -266,6 +274,10 @@ async function submit() {
     }
 
     document.getElementById('outCode').textContent = body.code;
+    if (body.freeCode) {
+      document.getElementById('outFreeCode').textContent = body.freeCode;
+      document.getElementById('freeBox').style.display = 'block';
+    }
     const link = document.getElementById('outLink');
     link.href = body.link;
     link.textContent = body.link;
