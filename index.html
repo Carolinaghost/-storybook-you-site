@@ -292,6 +292,11 @@
     font-size: 13px;
   }
   .site-footer a { color: var(--ink-soft); margin: 0 8px; }
+  /* The social row sits above the legal links because it is the one a
+     customer acts on - every ad says "tag us" and until now there was
+     nothing on the site to tag. */
+  .site-social { margin-bottom: 10px; }
+  .site-social a { font-weight: 600; }
   .site-footer a:hover { color: var(--orange); }
   .site-footer .entity { display: block; margin-top: 8px; }
 
@@ -496,7 +501,13 @@
   "name": "Crayonauts",
   "url": "https://crayonauts.com/",
   "logo": "https://crayonauts.com/icon-512_1.png",
-  "description": "Personalized coloring books made from your photo."
+  "description": "Personalized coloring books made from your photo.",
+  "sameAs": [
+    "https://www.instagram.com/crayonauts/",
+    "https://www.tiktok.com/@crayonauts",
+    "https://www.pinterest.com/crayonauts/",
+    "https://linktr.ee/crayonauts"
+  ]
 }
 </script>
 
@@ -757,6 +768,12 @@
   </div>
 
   <footer class="site-footer">
+    <div class="site-social">
+      <a href="https://www.instagram.com/crayonauts/" rel="me noopener" target="_blank">Instagram</a>
+      <a href="https://www.tiktok.com/@crayonauts" rel="me noopener" target="_blank">TikTok</a>
+      <a href="https://www.pinterest.com/crayonauts/" rel="me noopener" target="_blank">Pinterest</a>
+      <a href="https://linktr.ee/crayonauts" rel="me noopener" target="_blank">All our links</a>
+    </div>
     <a href="creators.html">Creators</a>
     <a href="legal.html#privacy">Privacy</a>
     <a href="legal.html#terms">Terms</a>
