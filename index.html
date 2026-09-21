@@ -84,6 +84,13 @@
   h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
   header { text-align: center; margin-bottom: 36px; padding-top: 6px; }
   .tagline { color: var(--ink-soft); font-size: 17px; margin-top: 8px; }
+  /* The price used to live only inside the paywall, which is display:none until
+     somebody has uploaded a photo and had two pages drawn. So a visitor could
+     not find out what it cost without committing to an upload. It says it here
+     now, above the fold, before anything is asked of them. */
+  .pricing { margin-top: 14px; font-size: 17px; color: var(--ink); }
+  .pricing b { font-family: 'Baloo 2', sans-serif; font-size: 20px; }
+  .pricing .free { display: block; margin-top: 4px; font-size: 15px; color: var(--ink-soft); }
 
   /* ---- the wordmark ----
      The name is a coloring page halfway through being coloured: hollow bubble
@@ -542,6 +549,10 @@
       </span>
     </div>
     <div class="tagline">Turn your kid's photo into a coloring book starring them</div>
+    <p class="pricing">
+      15 pages. <b>$15</b> for one person, <b>$25</b> for the whole family, up to five.
+      <span class="free">Two pages free first. No subscription, no account, no ads.</span>
+    </p>
   </header>
 
   <div class="scatter-stage" data-sample-scatter>
