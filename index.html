@@ -10,6 +10,22 @@
 <meta name="description" content="Turn a photo into a personalized 15-page coloring book starring whoever is in it. Personal or family - up to five people in one book. Ready in minutes, printed at home.">
 <link rel="canonical" href="https://crayonauts.com/">
 
+<!-- Meta pixel. Ads are judged on sales, not clicks, so the Purchase event
+     below carries the real dollar value of the book that was bought. Every
+     call goes through fbTrack(), which does nothing at all if the pixel
+     script was blocked - measurement must never be able to break checkout. -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1760133305035577');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+ src="https://www.facebook.com/tr?id=1760133305035577&ev=PageView&noscript=1" alt=""></noscript>
+
 <!-- What a pasted link looks like in a message, a post or a group chat. Without
      these it is a bare URL; with them it is the before-and-after picture, which
      is the whole pitch. -->
@@ -858,7 +874,21 @@ const trafficCampaign = (function () {
 
 // Fire and forget. A counter must never slow down or break a sale, so nothing
 // waits on this and every failure is swallowed on purpose.
+// Never let a blocked or slow pixel touch the funnel: no fbq, no error, no
+// difference to the page.
+function fbTrack(name, params) {
+  try { if (window.fbq) window.fbq('track', name, params || {}); } catch (err) { /* ignore */ }
+}
+
+// The site's own counters already fire at exactly the moments worth reporting,
+// so the pixel rides along with them rather than being wired in separately.
+const PIXEL_EVENTS = {
+  preview_started: 'ViewContent',
+  unlock_clicked:  'InitiateCheckout'
+};
+
 function track(type) {
+  if (PIXEL_EVENTS[type]) fbTrack(PIXEL_EVENTS[type]);
   try {
     fetch(BACKEND_URL + '/event', {
       method: 'POST',
@@ -1824,6 +1854,16 @@ async function openFromLink(id, token) {
     history.replaceState(null, '', location.pathname + '?order=' + params.get('order'));
     openFromLink(params.get('order'), linkToken);
   } else if (params.get('paid') === '1' && params.get('order')) {
+    // Stripe sends them back with the price of what they bought. Reported once
+    // per order id, because a refresh of this URL is not a second sale.
+    var amt = parseFloat(params.get('amt'));
+    var sold = 'fb_purchase_' + params.get('order');
+    var already = false;
+    try { already = sessionStorage.getItem(sold) === '1'; } catch (err) { /* private mode */ }
+    if (!already) {
+      fbTrack('Purchase', { value: isFinite(amt) ? amt : 0, currency: 'USD' });
+      try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
+    }
     resumeAfterPayment(params.get('order'));
   } else if (params.get('canceled') === '1') {
     const st = loadState();
