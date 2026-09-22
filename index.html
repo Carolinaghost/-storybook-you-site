@@ -1455,10 +1455,21 @@ async function generateRange(from, to, file, opts) {
         const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: currentAbortController.signal });
         const data = await response.json();
         if (!response.ok) {
-          const e = new Error((data && data.detail) || (data && data.error) || 'Conversion failed.');
           // Out of free previews, not paid, bad token: trying again changes
           // nothing and would only make the visitor wait.
-          e.settled = (response.status === 402 || response.status === 403 || response.status === 429);
+          const settled = (response.status === 402 || response.status === 403 || response.status === 429);
+          // Those three are our own sentences, written for a customer, so they
+          // get shown. Anything else is a drawing failure, and the message that
+          // came back is the image model's - which is how a mother trying to
+          // draw her daughter was once told "Invalid image file or mode for
+          // image 1 ... contact us at help.openai.com and include the request
+          // ID". She had done nothing wrong and there was nothing for her to
+          // do with that. The detail is still logged on the server; what
+          // reaches the page is a sentence written for her.
+          const e = new Error(settled
+            ? ((data && data.error) || 'Conversion failed.')
+            : 'Hiccup on our end - that page didn\'t draw. Please try again.');
+          e.settled = settled;
           throw e;
         }
 
@@ -1606,7 +1617,8 @@ previewBtn.addEventListener('click', async () => {
     });
 
     if (storyPages.filter(Boolean).length === 0) {
-      generateError.textContent = lastConvertError || 'The preview pages could not be drawn. Try again in a moment.';
+      generateError.textContent = lastConvertError
+        || 'Hiccup on our end - the preview pages didn\'t draw. Please try again.';
       generateError.style.display = 'block';
     } else {
       track('preview_shown');
