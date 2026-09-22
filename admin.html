@@ -79,6 +79,11 @@
   table.sources td:first-child { font-family:'Baloo 2', sans-serif; }
   table.sources td.n { text-align:right; }
   .sub { font-family:'Baloo 2', sans-serif; font-size:15px; margin:20px 0 2px; color:var(--ink); }
+  #creatorsCard { display: none; margin-top: 18px; }
+  table.sources td.quiet { color: var(--ink-soft); }
+  table.sources td .handle { color: var(--ink-soft); font-size: 12px; display: block; }
+  .code-cell { font-family:'Baloo 2', sans-serif; letter-spacing: 0.3px; }
+  .needs-welcome { color: var(--danger); font-size: 12px; }
   .back { display:block; text-align:center; margin-top:24px; font-size:14px; color: var(--ink-soft); }
 </style>
 </head>
@@ -102,6 +107,14 @@
     <div id="funnel"></div>
     <div class="sub">Where they came from</div>
     <div id="sources"></div>
+  </div>
+
+  <div class="page" id="creatorsCard">
+    <div class="stats-head">
+      <h2>Creators</h2>
+    </div>
+    <div id="creators"></div>
+    <p class="drop" id="creatorsNote"></p>
   </div>
 
   <div class="page">
@@ -209,6 +222,78 @@ async function loadStats() {
   }
 }
 
+// --- Creators -------------------------------------------------------------
+// Signing somebody up and somebody selling for you are two different things.
+// This table exists to show the difference at a glance: a creator with a code
+// and no sales looks exactly like one who is working, until the number is on
+// the screen next to their name.
+//
+// Sales and revenue come from Stripe, so they can be blank - the server says
+// so rather than sending a zero it cannot stand behind, and a zero and "we
+// could not ask" mean very different things when you are deciding who to chase.
+async function loadCreators() {
+  if (!adminKey) return;
+  const el = document.getElementById('creators');
+  const note = document.getElementById('creatorsNote');
+  try {
+    const url = BACKEND_URL + '/creators?key=' + encodeURIComponent(adminKey);
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const data = await r.json();
+    document.getElementById('creatorsCard').style.display = 'block';
+
+    const list = data.creators || [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty">Nobody has signed up yet.</div>';
+      note.textContent = '';
+      return;
+    }
+
+    // Biggest sellers first, then the ones who have not sold yet, newest first
+    // within each group - so the people worth a message are at the top.
+    list.sort(function (a, b) {
+      return (b.sales || 0) - (a.sales || 0) || b.id - a.id;
+    });
+
+    const clean = function (x) { return String(x == null ? '' : x).replace(/[<>]/g, ''); };
+    el.innerHTML = '<table class="sources">'
+      + '<tr><th>Creator</th><th>Code</th><th class="n" style="text-align:right">Followers</th>'
+      + '<th class="n" style="text-align:right">Sales</th>'
+      + '<th class="n" style="text-align:right">Revenue</th>'
+      + '<th class="n" style="text-align:right">Joined</th></tr>'
+      + list.map(function (c) {
+          const unknown = c.sales === null || c.sales === undefined;
+          const sales = unknown ? '&mdash;' : c.sales;
+          const revenue = unknown ? '&mdash;' : formatUsd(c.revenueCents || 0);
+          const quiet = unknown || !c.sales ? ' class="n quiet"' : ' class="n"';
+          const joined = c.signedUpAt
+            ? new Date(c.signedUpAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            : '';
+          return '<tr>'
+            + '<td>' + clean(c.name)
+              + (c.handle ? '<span class="handle">' + clean(c.handle) + '</span>' : '')
+              + (c.welcomedAt ? '' : '<span class="needs-welcome">welcome email never sent</span>')
+            + '</td>'
+            + '<td class="code-cell">' + clean(c.code) + '</td>'
+            + '<td class="n">' + (clean(c.followers) || '&mdash;') + '</td>'
+            + '<td' + quiet + '>' + sales + '</td>'
+            + '<td' + quiet + '>' + revenue + '</td>'
+            + '<td class="n quiet">' + joined + '</td>'
+            + '</tr>';
+        }).join('')
+      + '</table>';
+
+    const sellers = list.filter(function (c) { return c.sales; }).length;
+    note.innerHTML = data.salesComplete === null
+      ? 'Sales could not be read from Stripe just now, so those two columns are blank rather than zero.'
+      : (data.salesComplete === false
+          ? 'Revenue is a partial total - there are more Stripe sessions than this page walks.'
+          : sellers + ' of ' + list.length + ' have sold anything. What you owe each week comes from the Friday payout email, not from here.');
+  } catch (err) {
+    /* the creators list is a nice-to-have; never let it break the orders view */
+  }
+}
+
 document.querySelectorAll('.range button').forEach(function (b) {
   b.addEventListener('click', function () {
     document.querySelectorAll('.range button').forEach(function (x) { x.classList.remove('on'); });
@@ -239,6 +324,7 @@ async function loadOrders() {
     adminLogin.style.display = 'none';
     adminLoginError.style.display = 'none';
     loadStats();
+    loadCreators();
 
     const data = await response.json();
     const ordersList = (data && data.orders) || [];
