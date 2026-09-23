@@ -973,7 +973,8 @@ async function handleFile(file) {
 function resetBook() {
   storyPages = [];
   cancelRequested = true;
-  if (currentAbortController) currentAbortController.abort();
+  liveRequests.forEach((c) => { try { c.abort(); } catch (e) {} });
+  liveRequests.clear();
   storyGrid.style.display = 'none';
   storyGrid.innerHTML = '';
   document.getElementById('paywall').style.display = 'none';
@@ -1337,7 +1338,10 @@ const paywall = document.getElementById('paywall');
 
 let storyPages = [];
 let cancelRequested = false;
-let currentAbortController = null;
+// One per page in flight. The preview pages draw at the same time now, so a
+// single controller could only ever cancel whichever page started last and the
+// Stop button would leave the other one running.
+let liveRequests = new Set();
 let sceneCount = 15;
 let freePreviewPages = 2;
 
@@ -1401,113 +1405,139 @@ function paintGrid(total) {
 // rather than a generic shrug.
 let lastConvertError = '';
 
+// One page, start to finish. Pulled out of the loop it used to live in so the
+// preview pages can be drawn at the same time instead of one after the other.
+//
+// A page takes the image model about fifty seconds and there was nothing to be
+// done about that, but there was never a reason to spend it twice. Drawing them
+// one at a time meant a visitor stared at an empty grid for a minute and a half
+// before the book was worth looking at, and the feedback off the ads was the
+// obvious one: that is too long to ask anyone to wait. Two at once costs the
+// same money, uses the same free-preview allowance, and finishes in the time
+// the first page used to take on its own.
+async function drawOnePage(i, file, opts) {
+  if (cancelRequested) return 'stopped';
+  if (storyPages[i]) return null;
+
+  const cell = storyGrid.children[i];
+
+  // Phones drop connections. A page that takes most of a minute can die on a
+  // patchy signal, or when the screen sleeps, and one dropped request used to
+  // cost the whole page. Try again a couple of times before giving up. The
+  // server stores each page it draws, so a retry does not pay to redraw it.
+  let stopped = false;
+  let pageErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (cancelRequested) { stopped = true; break; }
+    if (attempt > 1 && cell) {
+      cell.innerHTML = '<span class="num">' + (i + 1) + '</span>retrying...';
+    }
+    const control = new AbortController();
+    liveRequests.add(control);
+    try {
+      const form = new FormData();
+      // A family sends a photo per person plus the names, in the same order -
+      // that pairing is the only thing telling the drawing who is who.
+      if (opts.people && opts.people.length) {
+        opts.people.forEach((person) => form.append('photos', person.file));
+        form.append('people', JSON.stringify(opts.people.map((person) => ({
+          name: person.name.trim(), subjectType: person.subjectType, star: person.star === true
+        }))));
+      } else {
+        form.append('photo', file);
+      }
+      form.append('theme', opts.theme);
+      form.append('sceneIndex', i);
+      form.append('childCount', opts.childCount);
+      form.append('subjectType', opts.audience);
+      form.append('detailLevel', opts.detailLevel || 'standard');
+      form.append('notes', opts.notes || '');
+      if (orderId) form.append('orderId', orderId);
+      if (accessToken) form.append('token', accessToken);
+
+      const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: control.signal });
+      const data = await response.json();
+      if (!response.ok) {
+        // Out of free previews, not paid, bad token: trying again changes
+        // nothing and would only make the visitor wait.
+        const settled = (response.status === 402 || response.status === 403 || response.status === 429);
+        // Those three are our own sentences, written for a customer, so they
+        // get shown. Anything else is a drawing failure, and the message that
+        // came back is the image model's - which is how a mother trying to
+        // draw her daughter was once told "Invalid image file or mode for
+        // image 1 ... contact us at help.openai.com and include the request
+        // ID". She had done nothing wrong and there was nothing for her to
+        // do with that. The detail is still logged on the server; what
+        // reaches the page is a sentence written for her.
+        const e = new Error(settled
+          ? ((data && data.error) || 'Conversion failed.')
+          : 'Hiccup on our end - that page didn\'t draw. Please try again.');
+        e.settled = settled;
+        throw e;
+      }
+
+      storyPages[i] = data.image;
+      if (cell) {
+        cell.classList.remove('pending');
+        cell.innerHTML = '<span class="num">' + (i + 1) + '</span><img src="' + data.image + '" alt="Page ' + (i + 1) + '">';
+      }
+      pageErr = null;
+      break;
+    } catch (err) {
+      if (err.name === 'AbortError') { stopped = true; break; }
+      pageErr = err;
+      if (err.settled || attempt === 3) break;
+      await new Promise(res => setTimeout(res, 1500 * attempt));
+    } finally {
+      // Dropped as soon as it is done, so Stop only ever aborts requests that
+      // are actually in the air.
+      liveRequests.delete(control);
+    }
+  }
+
+  if (stopped) {
+    if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>stopped';
+    return 'stopped';
+  }
+  if (pageErr) {
+    lastConvertError = pageErr.message || '';
+    if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
+    return 'failed';
+  }
+  return null;
+}
+
+// Generates scenes [from, to). Passes the order credentials so the backend can
+// tell a paid request from a free preview. All of them at once: this only ever
+// draws the free preview - the rest of the book is drawn on the server after
+// payment - so the range is two pages, not fifteen, and the backend holds its
+// own rate limit either way.
 async function generateRange(from, to, file, opts) {
-  let failures = 0;
   lastConvertError = '';
   cancelRequested = false;
   stopBtn.style.display = 'inline-block';
   stopBtn.disabled = false;
   stopBtn.textContent = 'Stop';
 
-  for (let i = from; i < to; i++) {
-    if (cancelRequested) break;
-    if (storyPages[i]) continue;
+  generateStatus.style.display = 'block';
+  generateStatus.textContent = (to - from) > 1
+    ? 'Drawing your first ' + (to - from) + ' pages - this takes about a minute...'
+    : 'Drawing page ' + (from + 1) + ' - this takes about a minute...';
 
-    generateStatus.style.display = 'block';
-    generateStatus.textContent = 'Drawing page ' + (i + 1) + ' of ' + to +
-      (i === from ? ' - the first page can take up to a minute while the server wakes up' : '') + '...';
-
-    const cell = storyGrid.children[i];
-
-    // Phones drop connections. A page that takes most of a minute can die on a
-    // patchy signal, or when the screen sleeps, and one dropped request used to
-    // cost the whole page. Try again a couple of times before giving up. The
-    // server stores each page it draws, so a retry does not pay to redraw it.
-    let stopped = false;
-    let pageErr = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      if (cancelRequested) { stopped = true; break; }
-      if (attempt > 1 && cell) {
-        cell.innerHTML = '<span class="num">' + (i + 1) + '</span>retrying...';
-      }
-      currentAbortController = new AbortController();
-      try {
-        const form = new FormData();
-        // A family sends a photo per person plus the names, in the same order -
-        // that pairing is the only thing telling the drawing who is who.
-        if (opts.people && opts.people.length) {
-          opts.people.forEach((person) => form.append('photos', person.file));
-          form.append('people', JSON.stringify(opts.people.map((person) => ({
-            name: person.name.trim(), subjectType: person.subjectType, star: person.star === true
-          }))));
-        } else {
-          form.append('photo', file);
-        }
-        form.append('theme', opts.theme);
-        form.append('sceneIndex', i);
-        form.append('childCount', opts.childCount);
-        form.append('subjectType', opts.audience);
-        form.append('detailLevel', opts.detailLevel || 'standard');
-        form.append('notes', opts.notes || '');
-        if (orderId) form.append('orderId', orderId);
-        if (accessToken) form.append('token', accessToken);
-
-        const response = await fetch(BACKEND_URL + '/convert', { method: 'POST', body: form, signal: currentAbortController.signal });
-        const data = await response.json();
-        if (!response.ok) {
-          // Out of free previews, not paid, bad token: trying again changes
-          // nothing and would only make the visitor wait.
-          const settled = (response.status === 402 || response.status === 403 || response.status === 429);
-          // Those three are our own sentences, written for a customer, so they
-          // get shown. Anything else is a drawing failure, and the message that
-          // came back is the image model's - which is how a mother trying to
-          // draw her daughter was once told "Invalid image file or mode for
-          // image 1 ... contact us at help.openai.com and include the request
-          // ID". She had done nothing wrong and there was nothing for her to
-          // do with that. The detail is still logged on the server; what
-          // reaches the page is a sentence written for her.
-          const e = new Error(settled
-            ? ((data && data.error) || 'Conversion failed.')
-            : 'Hiccup on our end - that page didn\'t draw. Please try again.');
-          e.settled = settled;
-          throw e;
-        }
-
-        storyPages[i] = data.image;
-        if (cell) {
-          cell.classList.remove('pending');
-          cell.innerHTML = '<span class="num">' + (i + 1) + '</span><img src="' + data.image + '" alt="Page ' + (i + 1) + '">';
-        }
-        pageErr = null;
-        break;
-      } catch (err) {
-        if (err.name === 'AbortError') { stopped = true; break; }
-        pageErr = err;
-        if (err.settled || attempt === 3) break;
-        await new Promise(res => setTimeout(res, 1500 * attempt));
-      }
-    }
-
-    if (stopped) {
-      if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>stopped';
-      break;
-    }
-    if (pageErr) {
-      failures++;
-      lastConvertError = pageErr.message || '';
-      if (cell) cell.innerHTML = '<span class="num">' + (i + 1) + '</span>failed';
-    }
-  }
+  const wanted = [];
+  for (let i = from; i < to; i++) wanted.push(i);
+  const results = await Promise.all(wanted.map((i) => drawOnePage(i, file, opts)));
 
   generateStatus.style.display = 'none';
   stopBtn.style.display = 'none';
-  currentAbortController = null;
-  return failures;
+  liveRequests.clear();
+  return results.filter((r) => r === 'failed').length;
 }
 
 stopBtn.addEventListener('click', () => {
   cancelRequested = true;
-  if (currentAbortController) currentAbortController.abort();
+  liveRequests.forEach((c) => { try { c.abort(); } catch (e) {} });
+  liveRequests.clear();
   stopBtn.disabled = true;
   stopBtn.textContent = 'Stopping...';
 });
