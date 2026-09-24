@@ -738,11 +738,6 @@ fbq('track', 'PageView');
       </div>
     </div>
     <label class="field">
-      <span>Your email</span>
-      <input type="email" id="parentEmail" placeholder="name@email.com">
-      <div class="error-text" id="emailError">Enter a valid email.</div>
-    </label>
-    <label class="field">
       <span>Anything to include in the story? (optional)</span>
       <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
     </label>
@@ -769,6 +764,12 @@ fbq('track', 'PageView');
         and download the whole book as a print-ready PDF.
       </p>
       <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;" id="priceText">$15</p>
+      <label class="field" style="text-align:left;">
+        <span>Your email</span>
+        <input type="email" id="parentEmail" placeholder="name@email.com">
+        <div class="error-text" id="emailError">Enter a valid email.</div>
+      </label>
+      <p style="margin:0 0 10px; font-size:12px; color:var(--ink-soft);">We'll send your download link here.</p>
       <button type="button" class="submit-btn" id="unlockBtn" style="margin-top:0;">Unlock all pages</button>
       <div class="error-text" id="payError">Could not start checkout.</div>
       <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">Secure checkout by Stripe. Card details never touch our server.</p>
@@ -1546,7 +1547,6 @@ stopBtn.addEventListener('click', () => {
 previewBtn.addEventListener('click', async () => {
   generateError.style.display = 'none';
   document.getElementById('childNameError').style.display = 'none';
-  document.getElementById('emailError').style.display = 'none';
 
   const peopleError = document.getElementById('peopleError');
   peopleError.style.display = 'none';
@@ -1591,8 +1591,7 @@ previewBtn.addEventListener('click', async () => {
   if (!childName && bookMode !== 'family') {
     document.getElementById('childNameError').style.display = 'block'; ok = false;
   }
-  const email = document.getElementById('parentEmail').value.trim();
-  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
+  // Email is collected later, at unlock - not required to see the free preview.
   if (!ok) return;
 
   track('preview_started');
@@ -1609,7 +1608,7 @@ previewBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        childName: childName, childCount: childCount, email: email,
+        childName: childName, childCount: childCount,
         theme: selectedTheme,
         notes: document.getElementById('notes').value.trim(),
         thumb: null,
@@ -1667,7 +1666,15 @@ previewBtn.addEventListener('click', async () => {
 // Paywall button: hand off to Stripe.
 document.getElementById('unlockBtn').addEventListener('click', async () => {
   const payError = document.getElementById('payError');
+  const emailError = document.getElementById('emailError');
   payError.style.display = 'none';
+  emailError.style.display = 'none';
+  const email = document.getElementById('parentEmail').value.trim();
+  if (!isValidEmail(email)) {
+    emailError.style.display = 'block';
+    document.getElementById('parentEmail').focus();
+    return;
+  }
   const btn = document.getElementById('unlockBtn');
   track('unlock_clicked');
   btn.disabled = true;
@@ -1677,7 +1684,7 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
     const r = await fetch(BACKEND_URL + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital', code: creatorCode() })
+      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital', code: creatorCode(), email: email })
     });
     const d = await r.json();
     if (!r.ok || !d.url) throw new Error(d.detail || d.error || 'Checkout could not be started.');
