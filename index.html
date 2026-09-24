@@ -957,7 +957,16 @@ dropzone.addEventListener('drop', e => {
   if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', e => {
-  if (e.target.files.length) handleFile(e.target.files[0]);
+  if (!e.target.files.length) return;
+  const picked = e.target.files[0];
+  // Cleared before handling, so choosing the SAME photo again still counts as a
+  // change. Left alone, the input keeps the file it already has, the browser
+  // fires nothing at all, and a second upload of the same picture does nothing:
+  // no strip, no request, no error, no sign the click registered. The obvious
+  // way to ask for a second run is to pick the same photo again, and that was
+  // the one way that could not work.
+  e.target.value = '';
+  handleFile(picked);
 });
 
 // Shrink the photo before anything else. Phone photos are 3-8MB, which makes
