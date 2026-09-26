@@ -234,11 +234,20 @@ fbq('track', 'PageView');
   .dropzone span { color: var(--ink-soft); font-size: 12.5px; }
   input[type=file] { display: none; }
 
-  .previews { display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
-
-  .preview-box { flex: 0 0 auto; width: 160px; text-align: center; }
-  .preview-box canvas, .preview-box img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
-  .preview-box p { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
+  /* With a photo in it the box turns into a row: the photo, a word about
+     it, and "Change" - tapping anywhere still opens the picker. */
+  .dropzone.filled { padding: 14px 16px; text-align: left; border-style: solid; }
+  .dropzone.filled .dz-empty { display: none; }
+  .previews { display: flex; align-items: center; gap: 14px; }
+  .previews img {
+    width: 76px; height: 76px; object-fit: cover; flex-shrink: 0; display: block;
+    border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(36, 38, 54, .12);
+  }
+  .dz-meta { flex: 1; min-width: 0; }
+  .dz-meta span { display: block; }
+  .dropzone .dz-change { color: var(--orange); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  /* The free preview: its two pages, side by side, filling the card. */
+  #storyGrid.preview-only { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px !important; }
 
   .themes { display: flex; gap: 10px; flex-wrap: wrap; }
   .theme-pill {
@@ -819,42 +828,12 @@ fbq('track', 'PageView');
     </div>
     <p class="step-desc intake-note" id="themeStepDesc" hidden>The style decides how the pages are drawn.</p>
 
-    <div id="familyPanel" style="display:none; margin-top:20px;">
-      <span class="intake-label">Everyone who should be in the book</span>
-      <p class="step-desc" style="margin-top:0;">Each person gets their own photo, so the drawings actually look like them. Team logos, cartoon characters and printed designs on clothes are drawn as plain fabric.</p>
-      <div id="peopleRows"></div>
-      <button type="button" class="add-person" id="addPersonBtn">+ Add another person</button>
-      <p class="people-hint" id="peopleHint"></p>
-      <div class="error-text" id="peopleError"></div>
-    </div>
-
-    <!-- Single-person books only. A family book asks for each photo beside the
-         name it belongs to, above, so this whole block is hidden for one. -->
-    <div id="uploadStep" style="margin-top:18px;">
-      <div id="singleUpload">
-      <div class="dropzone" id="dropzone">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-        <p>Drop a photo here, or tap to choose one</p>
-        <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
-      </div>
-      <input type="file" id="fileInput" accept="image/*">
-      <div class="error-text" id="fileError">Choose a photo to continue.</div>
-
-      <div class="previews" id="previews" style="display:none;">
-        <div class="preview-box">
-          <img id="origPreview" alt="Original photo">
-          <p>Original</p>
-        </div>
-      </div>
-
-      </div>
-    </div>
     <!-- Not "how old is the child in the photo". The drawing always looks like
          whoever is in the photo; this only decides how much is in the picture,
          so it is worded around the person holding the crayon. Shown in both
-         flows. It changes the drawing, so it is chosen before the free
-         preview, not after. -->
-    <div class="detail-block" style="margin-top:18px;">
+         flows. It changes the drawing, so it is chosen before the photo and
+         the free preview, which then sit together below it. -->
+    <div class="detail-block" style="margin-top:20px;">
       <span class="intake-label">Who's coloring it?</span>
       <div class="detail-row">
         <div class="themes" id="detailPicker">
@@ -889,6 +868,41 @@ fbq('track', 'PageView');
         <span>Anything to include in the story? (optional)</span>
         <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
       </label>
+    </div>
+
+    <div id="familyPanel" style="display:none; margin-top:20px;">
+      <span class="intake-label">Everyone who should be in the book</span>
+      <p class="step-desc" style="margin-top:0;">Each person gets their own photo, so the drawings actually look like them. Team logos, cartoon characters and printed designs on clothes are drawn as plain fabric.</p>
+      <div id="peopleRows"></div>
+      <button type="button" class="add-person" id="addPersonBtn">+ Add another person</button>
+      <p class="people-hint" id="peopleHint"></p>
+      <div class="error-text" id="peopleError"></div>
+    </div>
+
+    <!-- Single-person books only. A family book asks for each photo beside the
+         name it belongs to, above, so this whole block is hidden for one. -->
+    <div id="uploadStep" style="margin-top:20px;">
+      <div id="singleUpload">
+      <!-- Empty, it asks for a photo. Once there is one, the photo itself sits
+           in here (as in the mockup), and tapping it again swaps it. -->
+      <div class="dropzone" id="dropzone">
+        <div class="dz-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <p>Drop a photo here, or tap to choose one</p>
+          <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
+        </div>
+        <div class="previews" id="previews" style="display:none;">
+          <img id="origPreview" alt="Your photo">
+          <div class="dz-meta">
+            <p>Your photo</p>
+            <span>Logos on clothes are drawn as plain fabric.</span>
+          </div>
+          <span class="dz-change">Change</span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="error-text" id="fileError">Choose a photo to continue.</div>
+      </div>
     </div>
 
     <div class="cta-row">
@@ -1130,6 +1144,7 @@ async function handleFile(file) {
     selectedFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     photoDataUrl = dataUrl;
     previews.style.display = 'flex';
+    dropzone.classList.add('filled');
     origPreview.src = dataUrl;
   } catch (e) {
     fileError.textContent = "That image could not be read. Try a different photo.";
@@ -1634,13 +1649,16 @@ async function fetchSceneCount(theme) {
   return 15;
 }
 
-function paintGrid(total) {
+// The free preview paints only its own pages, side by side. After payment the
+// whole book is painted, so its pages can be watched arriving.
+function paintGrid(total, previewOnly) {
   storyGrid.style.display = 'grid';
+  storyGrid.classList.toggle('preview-only', previewOnly === true);
   storyGrid.innerHTML = '';
   for (let i = 0; i < total; i++) {
     const cell = document.createElement('div');
     cell.className = 'story-page pending';
-    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (i < freePreviewPages ? '...' : 'locked');
+    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (previewOnly ? 'drawing...' : (i < freePreviewPages ? '...' : 'locked'));
     storyGrid.appendChild(cell);
   }
 }
@@ -1902,7 +1920,7 @@ previewBtn.addEventListener('click', async () => {
 
   try {
     sceneCount = await fetchSceneCount(selectedTheme);
-    paintGrid(sceneCount);
+    paintGrid(freePreviewPages, true);
 
     // The order is what keeps these pages, so they become the first pages of
     // the paid book instead of being drawn again. A backend too old to start
@@ -2226,6 +2244,7 @@ async function openFromLink(id, token) {
       selectedFile = dataUrlToFile(st.photoDataUrl);
       document.getElementById('origPreview').src = st.photoDataUrl;
       document.getElementById('previews').style.display = 'flex';
+      dropzone.classList.add('filled');
       if (st.selectedTheme) chooseThemeFromTile(st.selectedTheme);
       orderId = st.orderId;
       accessToken = st.accessToken;
