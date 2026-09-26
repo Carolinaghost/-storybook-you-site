@@ -236,34 +236,6 @@ fbq('track', 'PageView');
 
   .previews { display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
 
-  /* The style strip. Bigger than the old preview tiles on purpose: this is the
-     first drawing of their own child anybody sees, and it is the advert. */
-  #styleStrip { margin-top: 22px; }
-  #styleStrip .strip-head { font-weight: 700; font-size: 15px; font-family: 'Baloo 2', sans-serif; margin-bottom: 4px; }
-  #styleStrip .strip-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px;
-  }
-  #styleStrip .tile {
-    border: 2px solid var(--line); border-radius: 12px; background: #fff;
-    padding: 0; overflow: hidden; cursor: pointer; text-align: center;
-    font-family: 'Karla', sans-serif; font-weight: 700; font-size: 13px; color: var(--ink-soft);
-  }
-  #styleStrip .tile.on { border-color: var(--orange); color: var(--orange); }
-  #styleStrip .tile .shot {
-    aspect-ratio: 1 / 1; width: 100%; display: block; background: #FAF7F3;
-    object-fit: cover;
-  }
-  #styleStrip .tile .cap { display: block; padding: 8px 4px; }
-  /* A tile still waiting on its drawing. Same box, so the strip does not jump
-     about as the four arrive. */
-  #styleStrip .tile .shot.waiting {
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ink-soft); font-size: 12px; font-weight: 400;
-  }
-  #styleStrip .tile.failed { opacity: .55; cursor: default; }
-  @media (max-width: 620px) {
-    #styleStrip .strip-grid { grid-template-columns: repeat(2, 1fr); }
-  }
   .preview-box { flex: 0 0 auto; width: 160px; text-align: center; }
   .preview-box canvas, .preview-box img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
   .preview-box p { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
@@ -875,13 +847,6 @@ fbq('track', 'PageView');
         </div>
       </div>
 
-      <!-- Four styles from their own photo, drawn automatically the moment it is
-           uploaded. No button, no name, no theme, no order - just the photo. -->
-      <div id="styleStrip" style="display:none;">
-        <div class="strip-head" id="stripHead">Drawing four styles from your photo...</div>
-        <p class="step-desc" style="margin:0;" id="stripSub">This takes about a minute. Tap one you like and we will set it for you.</p>
-        <div class="strip-grid" id="stripGrid"></div>
-      </div>
       </div>
     </div>
     <!-- Not "how old is the child in the photo". The drawing always looks like
@@ -1171,25 +1136,12 @@ async function handleFile(file) {
     fileError.style.display = 'block';
   }
   resetBook();
-  // Automatic: no button, and nothing from step 3 is needed or waited for.
-  if (selectedFile) runStyleStrip(selectedFile);
 }
 
 
-// --- the style strip ------------------------------------------------------
-// Four styles of their own photo, drawn automatically on upload. It comes
-// before step 3 and knows nothing about it: no name, no theme, no order. Step 3
-// is still what has to be filled in to get anywhere near paying.
-const styleStrip = document.getElementById('styleStrip');
-const stripGrid = document.getElementById('stripGrid');
-const stripHead = document.getElementById('stripHead');
-const stripSub = document.getElementById('stripSub');
-let stripRun = 0;          // so a second upload's strip cannot be overwritten by the first's reply
-let styleGridTiles = null; // {kid:[...], adult:[...]} from /options
-
-// Clicking a tile is a convenience, not a commitment: it sets the matching pill
-// in step 3, which the customer still has to complete. Police Officer lives in
-// the "when I grow up" dropdown rather than having a pill of its own.
+// Sets the style by name - used to put a saved order's style back. Police
+// Officer lives in the "when I grow up" dropdown rather than having a pill of
+// its own.
 function chooseThemeFromTile(theme) {
   const pill = document.querySelector('#themes .theme-pill[data-theme="' + theme + '"]');
   if (pill) {
@@ -1207,115 +1159,9 @@ function chooseThemeFromTile(theme) {
   return false;
 }
 
-function paintStrip(tiles, { drawing }) {
-  stripGrid.innerHTML = '';
-  tiles.forEach((tile) => {
-    const cell = document.createElement('button');
-    cell.type = 'button';
-    cell.className = 'tile';
-    if (tile.image) {
-      const img = document.createElement('img');
-      img.className = 'shot';
-      img.src = tile.image;
-      img.alt = tile.label + ' style, drawn from your photo';
-      cell.appendChild(img);
-    } else {
-      const box = document.createElement('span');
-      box.className = 'shot waiting';
-      box.textContent = drawing ? 'drawing...' : 'not available';
-      if (!drawing) cell.classList.add('failed');
-      cell.appendChild(box);
-    }
-    const cap = document.createElement('span');
-    cap.className = 'cap';
-    cap.textContent = tile.label;
-    cell.appendChild(cap);
-    if (tile.image) {
-      cell.addEventListener('click', () => {
-        stripGrid.querySelectorAll('.tile').forEach((t) => t.classList.remove('on'));
-        cell.classList.add('on');
-        if (chooseThemeFromTile(tile.theme)) {
-          stripSub.textContent = tile.label + ' is set as your style. Finish the next step to get the whole book.';
-        }
-      });
-    }
-    stripGrid.appendChild(cell);
-  });
-}
-
-// Out of free drawings is not an error to apologise for - it is the point at
-// which there is nothing left to show and the only thing left to do is the next
-// step. So say that, and take them there.
-function sendToNextStep(message) {
-  styleStrip.style.display = 'block';
-  stripHead.textContent = 'That is all the free drawings for today';
-  stripSub.textContent = message || 'Add a name and email below, and we will draw the whole book.';
-  stripGrid.innerHTML = '';
-  const styleStep = document.getElementById('childName').closest('.page');
-  if (styleStep) styleStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function loadStyleGrid() {
-  if (styleGridTiles) return styleGridTiles;
-  try {
-    const res = await fetch(BACKEND_URL + '/options');
-    const data = await res.json();
-    styleGridTiles = data.styleGrid || null;
-  } catch (e) { styleGridTiles = null; }
-  return styleGridTiles;
-}
-
-async function runStyleStrip(file) {
-  if (!file) return;
-  const run = ++stripRun;
-  const forAdult = audience === 'adult';
-  const grid = await loadStyleGrid();
-  const placeholders = (grid && grid[forAdult ? 'adult' : 'kid']) || [
-    { label: 'Style 1', theme: '' }, { label: 'Style 2', theme: '' },
-    { label: 'Style 3', theme: '' }, { label: 'Style 4', theme: '' }
-  ];
-  if (run !== stripRun) return;
-
-  styleStrip.style.display = 'block';
-  stripHead.textContent = 'Drawing four styles from your photo...';
-  stripSub.textContent = 'This takes about a minute. Tap one you like and we will set it for you.';
-  paintStrip(placeholders, { drawing: true });
-
-  try {
-    const form = new FormData();
-    form.append('photo', file);
-    form.append('audience', forAdult ? 'adult' : 'kid');
-    form.append('childCount', String(childCount));
-    const res = await fetch(BACKEND_URL + '/style-preview', { method: 'POST', body: form });
-    const data = await res.json().catch(() => ({}));
-    if (run !== stripRun) return;
-
-    if (res.status === 429 && data.advanceToNextStep) { sendToNextStep(); return; }
-    if (!res.ok) {
-      stripHead.textContent = 'The styles could not be drawn';
-      stripSub.textContent = (data && data.error) || 'You can still pick a style above and carry on.';
-      stripGrid.innerHTML = '';
-      return;
-    }
-    const drawn = (data.styles || []).filter((t) => t.image);
-    if (!drawn.length) { styleStrip.style.display = 'none'; return; }
-    stripHead.textContent = 'Your photo, in four styles';
-    stripSub.textContent = 'Tap one you like and we will set it as your style above.';
-    paintStrip(data.styles, { drawing: false });
-    track('style_strip_shown');
-  } catch (e) {
-    if (run !== stripRun) return;
-    stripHead.textContent = 'The styles could not be drawn';
-    stripSub.textContent = 'You can still pick a style above and carry on.';
-    stripGrid.innerHTML = '';
-  }
-}
 
 function resetBook() {
-  // A new photo means the old strip is of the wrong child. Bumping the run
-  // number also orphans any reply still in flight from the previous one.
-  stripRun++;
-  if (styleStrip) { styleStrip.style.display = 'none'; stripGrid.innerHTML = ''; }
+  // A new photo means any preview on screen is of the wrong child.
   storyPages = [];
   cancelRequested = true;
   liveRequests.forEach((c) => { try { c.abort(); } catch (e) {} });
