@@ -186,6 +186,19 @@
     <div class="error-text" id="formError"></div>
   </section>
 
+  <section id="lost">
+    <h2>Lost your code?</h2>
+    <p>Enter the email you signed up with and we&rsquo;ll send your code and link to it again.</p>
+    <label class="field">
+      <span>Your email</span>
+      <input type="email" id="lostEmail" autocomplete="email" placeholder="name@email.com">
+      <div class="error-text" id="lostEmailError">That email does not look right.</div>
+    </label>
+    <button class="go" id="lostBtn" type="button">Resend my code</button>
+    <p id="lostDone" style="display:none; margin:14px 0 0; font-size:14px; color:var(--ink-soft);"></p>
+    <div class="error-text" id="lostError"></div>
+  </section>
+
   <section id="done">
     <h2 id="doneTitle">You&rsquo;re in</h2>
     <p id="doneLead">Here&rsquo;s your code. We&rsquo;ve emailed it to you as well.</p>
@@ -291,6 +304,7 @@ async function submit() {
     }
 
     document.getElementById('form').style.display = 'none';
+    document.getElementById('lost').style.display = 'none';
     document.getElementById('done').style.display = 'block';
     document.getElementById('done').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (err) {
@@ -299,6 +313,44 @@ async function submit() {
     btn.textContent = 'Get my code';
   }
 }
+
+// Lost the email. The server sends the same words back whether or not the
+// address is on file - the code only ever goes to the inbox already on record.
+async function resendCode() {
+  const btn = document.getElementById('lostBtn');
+  const email = document.getElementById('lostEmail').value.trim();
+  const done = document.getElementById('lostDone');
+  ['lostEmailError', 'lostError'].forEach((id) => show(id, false));
+  done.style.display = 'none';
+  if (!looksLikeEmail(email)) { show('lostEmailError', true); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  try {
+    const resp = await fetch(BACKEND_URL + '/creators/resend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      setError('lostError', body.error || 'Something went wrong. Try again in a minute.');
+      btn.disabled = false;
+      btn.textContent = 'Resend my code';
+      return;
+    }
+    done.textContent = (body.message || 'If that email is on file, your code is on its way.') +
+      ' Check spam if it is not there in a few minutes.';
+    done.style.display = 'block';
+    btn.textContent = 'Sent';
+  } catch (err) {
+    setError('lostError', 'Could not reach us just now. Check your connection and try again.');
+    btn.disabled = false;
+    btn.textContent = 'Resend my code';
+  }
+}
+document.getElementById('lostBtn').addEventListener('click', resendCode);
+document.getElementById('lostEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') resendCode(); });
 
 document.getElementById('goBtn').addEventListener('click', submit);
 document.querySelectorAll('#form input').forEach((input) => {
