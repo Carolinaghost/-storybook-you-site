@@ -184,63 +184,70 @@ fbq('track', 'PageView');
   .page {
     background: var(--card);
     border-radius: 18px;
-    border: 2px dashed var(--line);
+    border: 1px solid var(--line);
     padding: 28px;
     margin-bottom: 28px;
     position: relative;
   }
   .page h2 { font-size: 21px; margin-bottom: 4px; }
-  .step-label { color: var(--orange); font-weight: 700; font-size: 14px; margin-bottom: 2px; font-family: 'Baloo 2', sans-serif; }
+  .step-label {
+    display: inline-block; background: var(--brand-ink); color: #fff;
+    font-weight: 700; font-size: 11.5px; letter-spacing: .03em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px; margin-bottom: 9px;
+  }
+  .page h2 + .step-desc:empty { display: none; }
+  .sr-only {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  /* Between the two step cards, as in the mockup. */
+  .step-arrow { text-align: center; color: var(--ink-soft); opacity: .6; font-size: 18px; line-height: 1; padding: 22px 0; }
+  /* Step 1 intake row: who it's for | style, side by side like the mockup,
+     stacking on narrow screens. */
+  .intake-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-start; margin-top: 14px; }
+  .intake-row .themes { margin: 0; }
+  .intake-row--tight { margin-top: 18px; }
+  /* Row 1: who it's for | thin divider | style. The toggle keeps its natural
+     width and the style pills wrap inside their own column beside it. */
+  .intake-row--split { display: grid; grid-template-columns: auto 1px minmax(0, 1fr); gap: 10px 18px; }
+  .intake-divider { align-self: stretch; background: var(--ink); opacity: .18; }
+  @media (max-width: 640px) {
+    .intake-row--split { grid-template-columns: minmax(0, 1fr); }
+    .intake-divider { height: 1px; }
+  }
+  .intake-note { margin-top: 8px; margin-bottom: 0; }
+  .intake-label { display: block; font-weight: 700; font-size: 14px; margin-bottom: 6px; font-family: 'Baloo 2', sans-serif; }
   .step-desc { color: var(--ink-soft); font-size: 14px; margin: 6px 0 18px; }
 
   .dropzone {
-    border: 3px solid var(--blue);
-    border-radius: 14px;
-    padding: 30px 20px;
+    border: 2px dashed #E2C9A8;
+    border-radius: 12px;
+    padding: 30px 18px;
     text-align: center;
     cursor: pointer;
-    background: #F3F7FC;
-    transition: background 0.15s ease;
+    background: #FFFAF2;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
-  .dropzone:hover, .dropzone.drag { background: #E7F0FA; }
-  .dropzone svg { width: 46px; height: 46px; margin-bottom: 10px; }
-  .dropzone p { margin: 0; font-weight: 700; color: var(--blue-dark); font-family: 'Baloo 2', sans-serif; font-size: 16px; }
-  .dropzone span { color: var(--ink-soft); font-size: 13px; }
+  .dropzone:hover, .dropzone.drag { background: #FDF0E0; border-color: var(--orange); }
+  .dropzone svg { width: 30px; height: 30px; margin-bottom: 6px; color: var(--ink-soft); }
+  .dropzone p { margin: 0; font-weight: 700; color: var(--ink); font-size: 15px; }
+  .dropzone span { color: var(--ink-soft); font-size: 12.5px; }
   input[type=file] { display: none; }
 
-  .previews { display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
-
-  /* The style strip. Bigger than the old preview tiles on purpose: this is the
-     first drawing of their own child anybody sees, and it is the advert. */
-  #styleStrip { margin-top: 22px; }
-  #styleStrip .strip-head { font-weight: 700; font-size: 15px; font-family: 'Baloo 2', sans-serif; margin-bottom: 4px; }
-  #styleStrip .strip-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px;
+  /* With a photo in it the box turns into a row: the photo, a word about
+     it, and "Change" - tapping anywhere still opens the picker. */
+  .dropzone.filled { padding: 14px 16px; text-align: left; border-style: solid; }
+  .dropzone.filled .dz-empty { display: none; }
+  .previews { display: flex; align-items: center; gap: 14px; }
+  .previews img {
+    width: 76px; height: 76px; object-fit: cover; flex-shrink: 0; display: block;
+    border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(36, 38, 54, .12);
   }
-  #styleStrip .tile {
-    border: 2px solid var(--line); border-radius: 12px; background: #fff;
-    padding: 0; overflow: hidden; cursor: pointer; text-align: center;
-    font-family: 'Karla', sans-serif; font-weight: 700; font-size: 13px; color: var(--ink-soft);
-  }
-  #styleStrip .tile.on { border-color: var(--orange); color: var(--orange); }
-  #styleStrip .tile .shot {
-    aspect-ratio: 1 / 1; width: 100%; display: block; background: #FAF7F3;
-    object-fit: cover;
-  }
-  #styleStrip .tile .cap { display: block; padding: 8px 4px; }
-  /* A tile still waiting on its drawing. Same box, so the strip does not jump
-     about as the four arrive. */
-  #styleStrip .tile .shot.waiting {
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ink-soft); font-size: 12px; font-weight: 400;
-  }
-  #styleStrip .tile.failed { opacity: .55; cursor: default; }
-  @media (max-width: 620px) {
-    #styleStrip .strip-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  .preview-box { flex: 1; min-width: 200px; text-align: center; }
-  .preview-box canvas, .preview-box img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
-  .preview-box p { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
+  .dz-meta { flex: 1; min-width: 0; }
+  .dz-meta span { display: block; }
+  .dropzone .dz-change { color: var(--orange); font-weight: 700; font-size: 14px; white-space: nowrap; }
+  /* The free preview: its two pages, side by side, filling the card. */
+  #storyGrid.preview-only { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px !important; }
 
   .themes { display: flex; gap: 10px; flex-wrap: wrap; }
   .theme-pill {
@@ -374,10 +381,85 @@ fbq('track', 'PageView');
     max-width:150px;
   }
   .career-pill select:focus-visible { outline:2px solid var(--blue); outline-offset:2px; border-radius:4px; }
-  .career-pill.active select { color:#fff; }
-  .career-pill.active select option { color:var(--ink); }
+  .career-pill.active select { color:var(--orange); }
+  .career-pill select option { color:var(--ink); }
+  /* As in the mockup: "When I grow up" until a career is picked, then the
+     career itself. The select keeps its value the whole time; only what shows
+     changes. */
+  #careerPill { position: relative; }
+  #careerPill:not(.active) select { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; }
+  #careerPill:not(.active) .career-label::after { content: ' \25BE'; }
+  #careerPill.active .career-label { display: none; }
+  .intake-row--split .theme-pill { padding: 8px 15px; }
 
   .samples { padding-bottom: 20px; }
+
+  /* ---- examples: corners on wide screens, a strip everywhere else ---- */
+  header { position: relative; }
+  .corner-samples {
+    --pb: clamp(70px, calc(25vw - 213px), 144px);
+    position: absolute; top: 30px; z-index: 1;
+    width: calc(var(--pb) * 2 + 40px);
+    text-align: center; pointer-events: none;
+  }
+  .corner-samples.left  { right: calc(100% + (50vw - 356px - var(--pb) * 2 - 40px) / 2); transform: rotate(-3deg); }
+  .corner-samples.right { left:  calc(100% + (50vw - 356px - var(--pb) * 2 - 40px) / 2); transform: rotate(3deg); }
+  .corner-fade { position: relative; height: calc(var(--pb) + 36px); }
+  .corner-layer { position: absolute; inset: 0; opacity: 0; animation: corner-cycle 20s infinite; }
+  .corner-layer.a { opacity: 1; }
+  .corner-layer.b { animation-delay: 10s; }
+  @keyframes corner-cycle { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .corner-layer { animation: none; }
+    .corner-layer.b { opacity: 0; }
+  }
+  .corner-pair { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .corner-pair img {
+    width: var(--pb); height: var(--pb); object-fit: cover; display: block;
+    border-radius: 14px; background: #fff; box-shadow: 0 6px 18px rgba(36, 38, 54, .18);
+  }
+  .corner-cap { margin-top: 10px; font-weight: 700; font-size: 14px; color: var(--ink-soft); font-family: 'Baloo 2', sans-serif; }
+  .corner-note { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
+
+  .samples-strip { margin: -6px 0 26px; }
+  .samples-strip .strip-title { font-size: 17px; margin-bottom: 8px; text-align: center; }
+  .samples-strip .sample-grid {
+    display: flex; gap: 12px; margin-top: 0;
+    overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px;
+  }
+  .samples-strip .sample { flex: 0 0 min(230px, 66%); scroll-snap-align: start; }
+  .samples-strip .sample-note { margin-top: 6px; font-size: 11px; }
+  @media (min-width: 700px) {
+    .samples-strip .sample { flex: 1 1 0; min-width: 0; }
+    .samples-strip .sample-grid { overflow: visible; }
+  }
+  @media (min-width: 1180px) { .samples-strip { display: none; } }
+  @media (max-width: 1179px) { .corner-samples { display: none; } }
+
+  /* ---- step 2 ---- */
+  .detail-block { margin-bottom: 16px; }
+  .detail-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .more-btn {
+    font: inherit; font-weight: 700; font-size: 14px; color: var(--ink-soft);
+    background: none; border: 0; padding: 8px 4px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .more-btn:hover { color: var(--orange); }
+  .more-btn[aria-expanded="true"] span { display: inline-block; transform: rotate(180deg); }
+  .more-options {
+    border: 1px dashed var(--line); border-radius: 12px; padding: 4px 16px 16px;
+    margin: -4px 0 16px; background: #FFFCF6;
+  }
+  @media (max-width: 440px) {
+    #detailPicker { gap: 8px; }
+    #detailPicker .theme-pill { padding: 7px 12px; }
+    .page { padding: 24px 20px; }
+  }
+  .cta-row { display: flex; gap: 10px; margin-top: 20px; }
+  .unlock-btn { width: auto; margin-top: 4px; border-radius: 999px; padding: 12px 30px; }
+  .paywall-seen { margin: 0 0 12px; font-size: 14px; color: var(--ink-soft); }
+  .paywall-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .cta-row .submit-btn { width: auto; margin-top: 0; border-radius: 999px; padding: 12px 30px; }
   .sample-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -433,6 +515,7 @@ fbq('track', 'PageView');
     padding-block: 34px;
   }
   .scatter-stage .page { margin-bottom: 0; }
+  .step-column { position: relative; }
 
   /* ---- who's in the book ---- */
   /* One person, one block: who the book is for, their name, then their photo.
@@ -535,7 +618,7 @@ fbq('track', 'PageView');
   @media (max-width: 900px) {
     .scatter-stage { margin-inline: 0; padding-inline: 0; padding-block: 0; }
     .scatter-stage .ss-scatter { display: none; }
-    .scatter-stage .page { margin-bottom: 28px; }
+    .scatter-stage .page { margin-bottom: 0; }
   }
 </style>
 
@@ -615,12 +698,57 @@ fbq('track', 'PageView');
       15 pages. <b>$15</b> for personal, <b>$25</b> for family - up to five people in one book.
       <span class="free">See two pages free before you pay. No subscription, no account, no ads.</span>
     </p>
+    <div class="corner-stage">
+      <div class="corner-samples left" aria-hidden="true">
+        <div class="corner-fade">
+          <div class="corner-layer a">
+            <div class="corner-pair">
+              <img src="samples/examples/jasmin-photo.jpg" width="700" height="700" alt="">
+              <span class="sample-arrow">&rarr;</span>
+              <img src="samples/examples/jasmin-page.jpg" width="700" height="700" alt="">
+            </div>
+            <div class="corner-cap">Jasmin &mdash; Superhero</div>
+          </div>
+          <div class="corner-layer b">
+            <div class="corner-pair">
+              <img src="samples/examples/malik-photo.jpg" width="700" height="700" alt="">
+              <span class="sample-arrow">&rarr;</span>
+              <img src="samples/examples/malik-page.jpg" width="700" height="700" alt="">
+            </div>
+            <div class="corner-cap">Malik &mdash; Firefighter</div>
+          </div>
+        </div>
+        <p class="corner-note">Photos are AI stand-ins, not customers.</p>
+      </div>
+      <div class="corner-samples right" aria-hidden="true">
+        <div class="corner-fade">
+          <div class="corner-layer a">
+            <div class="corner-pair">
+              <img src="samples/examples/owen-photo.jpg" width="700" height="700" alt="">
+              <span class="sample-arrow">&rarr;</span>
+              <img src="samples/examples/owen-page.jpg" width="700" height="700" alt="">
+            </div>
+            <div class="corner-cap">Owen &mdash; Adventure scene</div>
+          </div>
+          <div class="corner-layer b">
+            <div class="corner-pair">
+              <img src="samples/examples/mei-photo.jpg" width="700" height="700" alt="">
+              <span class="sample-arrow">&rarr;</span>
+              <img src="samples/examples/mei-page.jpg" width="700" height="700" alt="">
+            </div>
+            <div class="corner-cap">Mei &mdash; Fairy tale</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
 
-  <div class="scatter-stage" data-sample-scatter>
-  <div class="page samples" data-sample-block>
-    <h2>What you get</h2>
-    <p class="step-desc">A photo goes in. A page starring them comes out.</p>
+  <!-- What you get. On a wide screen the examples sit in the top corners beside
+       the header and loose sample pages drift down both sides of the steps.
+       Where there is no room beside the column, the same examples show as a
+       small strip above Step 1 instead. -->
+  <section class="samples samples-strip" aria-label="What you get">
+    <h2 class="strip-title">What you get</h2>
     <div class="sample-grid">
       <figure class="sample">
         <div class="sample-pair">
@@ -659,156 +787,163 @@ fbq('track', 'PageView');
       The photos above are AI-generated stand-ins, not real customers &mdash; we do not publish
       our customers' photos. The coloring pages are real output from this site.
     </p>
-  </div>
-  </div>
+  </section>
 
+  <div class="scatter-stage" data-sample-scatter>
+  <div class="step-column" data-sample-block>
   <div class="page">
     <div class="step-label">Step 1</div>
-    <h2>Who's in the book?</h2>
-    <p class="step-desc" id="whoStepDesc">Tell us who first, then we'll ask for a photo of each of them.</p>
+    <h2>Upload a photo</h2>
+    <p class="step-desc" id="whoStepDesc"></p>
 
-    <div class="themes" id="bookModePicker">
-      <button type="button" class="theme-pill active" data-mode="one">Personal</button>
-      <button type="button" class="theme-pill" data-mode="family">The whole family</button>
+    <div class="intake-row intake-row--split">
+      <div class="themes" id="bookModePicker">
+        <button type="button" class="theme-pill active" data-mode="one">Personal</button>
+        <button type="button" class="theme-pill" data-mode="family">The whole family</button>
+      </div>
+      <div class="intake-divider" aria-hidden="true"></div>
+      <div class="themes" id="themes">
+        <!-- The real style buttons. Hidden: they hold the state every handler
+             reads, and the dropdown beside them just mirrors and clicks them. -->
+        <div class="theme-src" hidden>
+          <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
+          <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
+          <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
+          <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
+          <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
+          <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
+        </div>
+        <span class="theme-pill career-pill style-pill active" id="stylePill" data-audience="both">
+          <select id="themeSelect" aria-label="Pick a style"></select>
+        </span>
+        <span class="theme-pill career-pill" id="careerPill" data-audience="kid">
+          <span class="career-label">When I grow up</span>
+          <select id="careerSelect" aria-label="Pick a career">
+            <option value="Firefighter">Firefighter</option>
+            <option value="Police Officer">Police officer</option>
+            <option value="Doctor">Doctor</option>
+          </select>
+        </span>
+      </div>
     </div>
+    <p class="step-desc intake-note" id="themeStepDesc" hidden>The style decides how the pages are drawn.</p>
 
+    <!-- Not "how old is the child in the photo". The drawing always looks like
+         whoever is in the photo; this only decides how much is in the picture,
+         so it is worded around the person holding the crayon. Shown in both
+         flows. It changes the drawing, so it is chosen before the photo and
+         the free preview, which then sit together below it. -->
+    <div class="detail-block" style="margin-top:20px;">
+      <span class="intake-label">Who's coloring it?</span>
+      <div class="detail-row">
+        <div class="themes" id="detailPicker">
+          <button type="button" class="theme-pill" data-detail="simple">Simple<span class="ages">ages 3-4</span></button>
+          <button type="button" class="theme-pill active" data-detail="standard">Standard<span class="ages">ages 5-7</span></button>
+          <button type="button" class="theme-pill" data-detail="detailed">Detailed<span class="ages">ages 8+</span></button>
+        </div>
+        <button type="button" class="more-btn" id="moreOptionsBtn" aria-expanded="false" aria-controls="moreOptions">More options <span aria-hidden="true">&#9662;</span></button>
+      </div>
+    </div>
+    <div id="moreOptions" class="more-options" hidden>
     <div id="onePersonPanel">
-      <div style="margin-top:20px;">
-        <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;">Who's the star of this book?</span>
-        <div class="themes" id="audiencePicker">
-          <button type="button" class="theme-pill active" data-audience="kid">A kid</button>
-          <button type="button" class="theme-pill" data-audience="adult">A parent or grandparent (gift)</button>
+      <div class="intake-row">
+        <div>
+          <span class="intake-label">Who's the star of this book?</span>
+          <div class="themes" id="audiencePicker">
+            <button type="button" class="theme-pill active" data-audience="kid">A kid</button>
+            <button type="button" class="theme-pill" data-audience="adult">A parent or grandparent (gift)</button>
+          </div>
+        </div>
+        <div>
+          <span class="intake-label" id="countLabel">How many kids are in this photo?</span>
+          <div class="themes" id="childCountPicker">
+            <button type="button" class="theme-pill active" data-count="1">Just 1</button>
+            <button type="button" class="theme-pill" data-count="2">2</button>
+            <button type="button" class="theme-pill" data-count="3">3</button>
+          </div>
         </div>
       </div>
-
-      <div style="margin-top:20px;">
-        <span style="display:block; font-weight:700; font-size:14px; margin-bottom:6px; font-family:'Baloo 2', sans-serif;" id="countLabel">How many kids are in this photo?</span>
-        <div class="themes" id="childCountPicker">
-          <button type="button" class="theme-pill active" data-count="1">Just 1</button>
-          <button type="button" class="theme-pill" data-count="2">2</button>
-          <button type="button" class="theme-pill" data-count="3">3</button>
-        </div>
-      </div>
+    </div>
+      <label class="field" style="margin-top:14px; margin-bottom:0;">
+        <span>Anything to include in the story? (optional)</span>
+        <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
+      </label>
     </div>
 
     <div id="familyPanel" style="display:none; margin-top:20px;">
-      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:4px; font-family:'Baloo 2', sans-serif;">Everyone who should be in the book</span>
+      <span class="intake-label">Everyone who should be in the book</span>
       <p class="step-desc" style="margin-top:0;">Each person gets their own photo, so the drawings actually look like them. Team logos, cartoon characters and printed designs on clothes are drawn as plain fabric.</p>
       <div id="peopleRows"></div>
       <button type="button" class="add-person" id="addPersonBtn">+ Add another person</button>
       <p class="people-hint" id="peopleHint"></p>
       <div class="error-text" id="peopleError"></div>
     </div>
-  </div>
 
-  <!-- Single-person books only. A family book asks for each photo beside the
-       name it belongs to, in step 1, so this whole card is hidden for one. -->
-  <div class="page" id="uploadStep">
-    <div class="step-label">Step 2</div>
-    <h2>Upload a photo</h2>
-    <p class="step-desc">Front-facing photos with good lighting work best. Team logos, cartoon characters and printed designs on clothes are drawn as plain fabric.</p>
-
-    <div id="singleUpload">
-    <div class="dropzone" id="dropzone">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#2F5FA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-      <p>Drop a photo here, or tap to choose one</p>
-      <span>JPG or PNG</span>
-    </div>
-    <input type="file" id="fileInput" accept="image/*">
-    <div class="error-text" id="fileError">Choose a photo to continue.</div>
-
-    <div class="previews" id="previews" style="display:none;">
-      <div class="preview-box">
-        <img id="origPreview" alt="Original photo">
-        <p>Original</p>
+    <!-- Single-person books only. A family book asks for each photo beside the
+         name it belongs to, above, so this whole block is hidden for one. -->
+    <div id="uploadStep" style="margin-top:20px;">
+      <div id="singleUpload">
+      <!-- Empty, it asks for a photo. Once there is one, the photo itself sits
+           in here (as in the mockup), and tapping it again swaps it. -->
+      <div class="dropzone" id="dropzone">
+        <div class="dz-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <p>Drop a photo here, or tap to choose one</p>
+          <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
+        </div>
+        <div class="previews" id="previews" style="display:none;">
+          <img id="origPreview" alt="Your photo">
+          <div class="dz-meta">
+            <p>Your photo</p>
+            <span>Logos on clothes are drawn as plain fabric.</span>
+          </div>
+          <span class="dz-change">Change</span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="error-text" id="fileError">Choose a photo to continue.</div>
       </div>
     </div>
 
-    <!-- Four styles from their own photo, drawn automatically the moment it is
-         uploaded. No button, no name, no theme, no order - just the photo. -->
-    <div id="styleStrip" style="display:none;">
-      <div class="strip-head" id="stripHead">Drawing four styles from your photo...</div>
-      <p class="step-desc" style="margin:0;" id="stripSub">This takes about a minute. Tap one you like and we will set it for you.</p>
-      <div class="strip-grid" id="stripGrid"></div>
-    </div>
-    </div>
-  </div>
-
-  <div class="page">
-    <div class="step-label" id="styleStepLabel">Step 3</div>
-    <h2>Pick a style</h2>
-    <p class="step-desc" id="themeStepDesc">This decides how the page is drawn.</p>
-    <div class="themes" id="themes">
-      <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
-      <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
-      <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
-      <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
-      <span class="theme-pill career-pill" id="careerPill" data-audience="kid">
-        <span class="career-label">When I grow up</span>
-        <select id="careerSelect" aria-label="Pick a career">
-          <option value="Firefighter">Firefighter</option>
-          <option value="Police Officer">Police officer</option>
-          <option value="Doctor">Doctor</option>
-        </select>
-      </span>
-      <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
-      <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
-    </div>
-
-    <label class="field" style="margin-top:18px;">
-      <span id="childNameLabel">Child's name</span>
-      <input type="text" id="childName" placeholder="Ava">
-      <div class="error-text" id="childNameError">Enter the child's name.</div>
-    </label>
-    <!-- Not "how old is the child in the photo". The drawing always looks like
-         whoever is in the photo; this only decides how much is in the picture,
-         so it is worded around the person holding the crayon. Shown in both
-         flows - a family book hides the name field above but still needs
-         this. -->
-    <div style="margin-bottom:16px;">
-      <span style="display:block; font-weight:700; font-size:14px; margin-bottom:4px; font-family:'Baloo 2', sans-serif;">Who's coloring it?</span>
-      <p class="step-desc" style="margin-top:0; margin-bottom:8px;">This only changes how busy the pages are. The drawings still look like the people in your photos.</p>
-      <div class="themes" id="detailPicker">
-        <button type="button" class="theme-pill" data-detail="simple">Simple<span class="ages">ages 3-4</span></button>
-        <button type="button" class="theme-pill active" data-detail="standard">Standard<span class="ages">ages 5-7</span></button>
-        <button type="button" class="theme-pill" data-detail="detailed">Detailed<span class="ages">ages 8+</span></button>
-      </div>
-    </div>
-    <label class="field">
-      <span>Your email</span>
-      <input type="email" id="parentEmail" placeholder="name@email.com">
-      <div class="error-text" id="emailError">Enter a valid email.</div>
-    </label>
-    <label class="field">
-      <span>Anything to include in the story? (optional)</span>
-      <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
-    </label>
-
-    <div style="display:flex; gap:10px; margin-top:18px;">
+    <div class="cta-row">
       <button type="button" class="submit-btn" id="previewBtn" style="margin-top:0;">See my free preview</button>
       <button type="button" class="submit-btn" id="stopBtn" style="margin-top:0; display:none; background:#fff; color:var(--danger); border:2px solid var(--danger);">Stop</button>
     </div>
     <div class="error-text" id="generateError">Upload a photo first.</div>
     <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
-  </div>
-
-  <div class="page">
-    <div class="step-label" id="bookStepLabel">Step 4</div>
-    <h2>Your book</h2>
-    <p class="step-desc">Your free preview pages appear here. Like what you see? Unlock the rest.</p>
 
     <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+  </div>
 
-    <div id="paywall" style="display:none; margin-top:20px; border:2px solid #2F5FA8; border-radius:14px; padding:18px; text-align:center;">
-      <h3 style="margin:0 0 6px; font-family:'Baloo 2', sans-serif;">Unlock the full book</h3>
-      <p style="margin:0 0 4px; color:var(--ink-soft); font-size:14px;">
+  <div class="step-arrow" aria-hidden="true">&darr;</div>
+
+  <div class="page">
+    <div class="step-label" id="styleStepLabel">Step 2</div>
+    <h2>Name + email</h2>
+
+    <label class="field">
+      <span class="sr-only" id="childNameLabel">Child's name</span>
+      <input type="text" id="childName" placeholder="Who's the star? Their name, e.g. Ava" autocomplete="off">
+      <div class="error-text" id="childNameError">Enter the child's name.</div>
+    </label>
+    <label class="field">
+      <span class="sr-only">Your email</span>
+      <input type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
+      <div class="error-text" id="emailError">Enter a valid email.</div>
+    </label>
+
+    <!-- Unlock. Always here, so someone who has seen enough (or has used up
+         the free drawings for today) can buy straight away. The name and email
+         above are only asked for now, at payment - the free preview in Step 1
+         needs neither. -->
+    <div id="paywall">
+      <p class="paywall-seen" id="paywallSeen" hidden>
         You have seen <span id="previewCountText">2</span> pages free. Unlock all <span id="totalCountText">15</span>
         and download the whole book as a print-ready PDF.
       </p>
-      <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;" id="priceText">$15</p>
-      <button type="button" class="submit-btn" id="unlockBtn" style="margin-top:0;">Unlock all pages</button>
+      <button type="button" class="submit-btn unlock-btn" id="unlockBtn">Unlock now &mdash; <span id="priceText">$15</span></button>
       <div class="error-text" id="payError">Could not start checkout.</div>
-      <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">Secure checkout by Stripe. Card details never touch our server.</p>
+      <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
     </div>
 
     <div class="confirm" id="confirm">
@@ -818,7 +953,8 @@ fbq('track', 'PageView');
       <button type="button" class="submit-btn" id="downloadBtn" style="margin-top:14px; display:none;">Download the book (PDF)</button>
       <div class="error-text" id="downloadError"></div>
     </div>
-
+  </div>
+  </div>
   </div>
 
   <footer class="site-footer">
@@ -1008,31 +1144,19 @@ async function handleFile(file) {
     selectedFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     photoDataUrl = dataUrl;
     previews.style.display = 'flex';
+    dropzone.classList.add('filled');
     origPreview.src = dataUrl;
   } catch (e) {
     fileError.textContent = "That image could not be read. Try a different photo.";
     fileError.style.display = 'block';
   }
   resetBook();
-  // Automatic: no button, and nothing from step 3 is needed or waited for.
-  if (selectedFile) runStyleStrip(selectedFile);
 }
 
 
-// --- the style strip ------------------------------------------------------
-// Four styles of their own photo, drawn automatically on upload. It comes
-// before step 3 and knows nothing about it: no name, no theme, no order. Step 3
-// is still what has to be filled in to get anywhere near paying.
-const styleStrip = document.getElementById('styleStrip');
-const stripGrid = document.getElementById('stripGrid');
-const stripHead = document.getElementById('stripHead');
-const stripSub = document.getElementById('stripSub');
-let stripRun = 0;          // so a second upload's strip cannot be overwritten by the first's reply
-let styleGridTiles = null; // {kid:[...], adult:[...]} from /options
-
-// Clicking a tile is a convenience, not a commitment: it sets the matching pill
-// in step 3, which the customer still has to complete. Police Officer lives in
-// the "when I grow up" dropdown rather than having a pill of its own.
+// Sets the style by name - used to put a saved order's style back. Police
+// Officer lives in the "when I grow up" dropdown rather than having a pill of
+// its own.
 function chooseThemeFromTile(theme) {
   const pill = document.querySelector('#themes .theme-pill[data-theme="' + theme + '"]');
   if (pill) {
@@ -1050,129 +1174,30 @@ function chooseThemeFromTile(theme) {
   return false;
 }
 
-function paintStrip(tiles, { drawing }) {
-  stripGrid.innerHTML = '';
-  tiles.forEach((tile) => {
-    const cell = document.createElement('button');
-    cell.type = 'button';
-    cell.className = 'tile';
-    if (tile.image) {
-      const img = document.createElement('img');
-      img.className = 'shot';
-      img.src = tile.image;
-      img.alt = tile.label + ' style, drawn from your photo';
-      cell.appendChild(img);
-    } else {
-      const box = document.createElement('span');
-      box.className = 'shot waiting';
-      box.textContent = drawing ? 'drawing...' : 'not available';
-      if (!drawing) cell.classList.add('failed');
-      cell.appendChild(box);
-    }
-    const cap = document.createElement('span');
-    cap.className = 'cap';
-    cap.textContent = tile.label;
-    cell.appendChild(cap);
-    if (tile.image) {
-      cell.addEventListener('click', () => {
-        stripGrid.querySelectorAll('.tile').forEach((t) => t.classList.remove('on'));
-        cell.classList.add('on');
-        if (chooseThemeFromTile(tile.theme)) {
-          stripSub.textContent = tile.label + ' is set as your style. Finish the next step to get the whole book.';
-        }
-      });
-    }
-    stripGrid.appendChild(cell);
-  });
-}
-
-// Out of free drawings is not an error to apologise for - it is the point at
-// which there is nothing left to show and the only thing left to do is the next
-// step. So say that, and take them there.
-function sendToNextStep(message) {
-  styleStrip.style.display = 'block';
-  stripHead.textContent = 'That is all the free drawings for today';
-  stripSub.textContent = message || 'Add a name and pick a style below, and we will draw the whole book.';
-  stripGrid.innerHTML = '';
-  const styleStep = document.getElementById('themes').closest('.page');
-  if (styleStep) styleStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function loadStyleGrid() {
-  if (styleGridTiles) return styleGridTiles;
-  try {
-    const res = await fetch(BACKEND_URL + '/options');
-    const data = await res.json();
-    styleGridTiles = data.styleGrid || null;
-  } catch (e) { styleGridTiles = null; }
-  return styleGridTiles;
-}
-
-async function runStyleStrip(file) {
-  if (!file) return;
-  const run = ++stripRun;
-  const forAdult = audience === 'adult';
-  const grid = await loadStyleGrid();
-  const placeholders = (grid && grid[forAdult ? 'adult' : 'kid']) || [
-    { label: 'Style 1', theme: '' }, { label: 'Style 2', theme: '' },
-    { label: 'Style 3', theme: '' }, { label: 'Style 4', theme: '' }
-  ];
-  if (run !== stripRun) return;
-
-  styleStrip.style.display = 'block';
-  stripHead.textContent = 'Drawing four styles from your photo...';
-  stripSub.textContent = 'This takes about a minute. Tap one you like and we will set it for you.';
-  paintStrip(placeholders, { drawing: true });
-
-  try {
-    const form = new FormData();
-    form.append('photo', file);
-    form.append('audience', forAdult ? 'adult' : 'kid');
-    form.append('childCount', String(childCount));
-    const res = await fetch(BACKEND_URL + '/style-preview', { method: 'POST', body: form });
-    const data = await res.json().catch(() => ({}));
-    if (run !== stripRun) return;
-
-    if (res.status === 429 && data.advanceToNextStep) { sendToNextStep(); return; }
-    if (!res.ok) {
-      stripHead.textContent = 'The styles could not be drawn';
-      stripSub.textContent = (data && data.error) || 'You can still pick a style below and carry on.';
-      stripGrid.innerHTML = '';
-      return;
-    }
-    const drawn = (data.styles || []).filter((t) => t.image);
-    if (!drawn.length) { styleStrip.style.display = 'none'; return; }
-    stripHead.textContent = 'Your photo, in four styles';
-    stripSub.textContent = 'Tap one you like and we will set it as your style below.';
-    paintStrip(data.styles, { drawing: false });
-    track('style_strip_shown');
-  } catch (e) {
-    if (run !== stripRun) return;
-    stripHead.textContent = 'The styles could not be drawn';
-    stripSub.textContent = 'You can still pick a style below and carry on.';
-    stripGrid.innerHTML = '';
-  }
-}
 
 function resetBook() {
-  // A new photo means the old strip is of the wrong child. Bumping the run
-  // number also orphans any reply still in flight from the previous one.
-  stripRun++;
-  if (styleStrip) { styleStrip.style.display = 'none'; stripGrid.innerHTML = ''; }
+  // A new photo means any preview on screen is of the wrong child.
   storyPages = [];
   cancelRequested = true;
   liveRequests.forEach((c) => { try { c.abort(); } catch (e) {} });
   liveRequests.clear();
   storyGrid.style.display = 'none';
   storyGrid.innerHTML = '';
-  document.getElementById('paywall').style.display = 'none';
+  document.getElementById('paywallSeen').hidden = true;
   document.getElementById('confirm').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
+  // The order carries the photo it was started with, so a new photo needs a
+  // new one - Unlock makes it if no preview does first.
+  orderId = null;
+  accessToken = null;
+  orderKey = '';
 }
 
 let selectedTheme = 'Portrait';
 const careerPill = document.getElementById('careerPill');
 const careerSelect = document.getElementById('careerSelect');
+const stylePill = document.getElementById('stylePill');
+const themeSelect = document.getElementById('themeSelect');
 
 function activatePill(el) {
   document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
@@ -1180,7 +1205,7 @@ function activatePill(el) {
 }
 
 document.querySelectorAll('#themes .theme-pill').forEach(btn => {
-  if (btn === careerPill) return;   // the career pill has its own handler
+  if (btn === careerPill || btn === stylePill) return;   // the dropdown pills have their own handlers
   btn.addEventListener('click', () => {
     activatePill(btn);
     selectedTheme = btn.dataset.theme;
@@ -1199,6 +1224,53 @@ careerPill.addEventListener('click', (e) => {
 careerSelect.addEventListener('change', () => {
   activatePill(careerPill);
   selectedTheme = careerSelect.value;
+});
+
+// The style dropdown. The hidden buttons in #themes .theme-src are still the
+// real state - the audience filter shows/hides them and every other handler
+// activates them - so this only lists the ones currently allowed, shows the
+// active one, and picking an option clicks the matching button.
+const themeButtons = Array.from(document.querySelectorAll('#themes .theme-src .theme-pill'));
+function syncStyleSelect() {
+  const allowed = themeButtons.filter((b) => b.style.display !== 'none');
+  const wanted = allowed.map((b) => b.dataset.theme + '|' + b.textContent).join(',');
+  if (themeSelect.dataset.list !== wanted) {
+    themeSelect.innerHTML = '';
+    allowed.forEach((b) => {
+      const o = document.createElement('option');
+      o.value = b.dataset.theme;
+      o.textContent = b.textContent;
+      themeSelect.appendChild(o);
+    });
+    themeSelect.dataset.list = wanted;
+  }
+  const active = themeButtons.find((b) => b.classList.contains('active') && b.style.display !== 'none');
+  if (active) themeSelect.value = active.dataset.theme;
+  stylePill.classList.toggle('active', !!active);
+}
+themeSelect.addEventListener('change', () => {
+  const btn = themeButtons.find((b) => b.dataset.theme === themeSelect.value);
+  if (btn) btn.click();
+});
+stylePill.addEventListener('click', (e) => {
+  const btn = themeButtons.find((b) => b.dataset.theme === themeSelect.value);
+  if (btn && !btn.classList.contains('active')) btn.click();
+  if (e.target !== themeSelect && typeof themeSelect.showPicker === 'function') {
+    try { themeSelect.showPicker(); } catch (err) { themeSelect.focus(); }
+  }
+});
+new MutationObserver(syncStyleSelect).observe(document.querySelector('#themes .theme-src'), {
+  subtree: true, attributes: true, attributeFilter: ['class', 'style']
+});
+syncStyleSelect();
+
+// Kid or grown-up, how many in the photo, and story notes live behind this so
+// the step stays as short as the mockup. The defaults are what most people want.
+const moreOptionsBtn = document.getElementById('moreOptionsBtn');
+moreOptionsBtn.addEventListener('click', () => {
+  const panel = document.getElementById('moreOptions');
+  panel.hidden = !panel.hidden;
+  moreOptionsBtn.setAttribute('aria-expanded', String(!panel.hidden));
 });
 
 // ---------------------------------------------------------------------------
@@ -1414,12 +1486,11 @@ function applyBookMode() {
   document.getElementById('familyPanel').style.display = family ? '' : 'none';
   document.getElementById('whoStepDesc').textContent = family
     ? "Add everyone who's in the book, with a photo of each."
-    : "Tell us who first, then we'll ask for a photo of each of them.";
+    : '';
   // A family book collects its photos beside the names in this step, so the
   // upload step has nothing left to ask and the ones after it move up.
   document.getElementById('uploadStep').style.display = family ? 'none' : '';
-  document.getElementById('styleStepLabel').textContent = family ? 'Step 2' : 'Step 3';
-  document.getElementById('bookStepLabel').textContent = family ? 'Step 3' : 'Step 4';
+  document.getElementById('styleStepLabel').textContent = 'Step 2';
   // In a family book the story follows one person, and that name is the one the
   // book is for - so the name field downstream is filled in from it.
   const nameField = document.getElementById('childName').closest('.field');
@@ -1481,12 +1552,12 @@ document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
       countLabel.textContent = 'How many people are in this photo?';
       themeStepDesc.textContent = 'This decides how their page is drawn.';
       document.getElementById('childNameLabel').textContent = 'Their name';
-      document.getElementById('childName').placeholder = 'Grandma Rose';
+      document.getElementById('childName').placeholder = "Who's the star? Their name, e.g. Grandma Rose";
     } else {
       countLabel.textContent = 'How many kids are in this photo?';
       themeStepDesc.textContent = "This decides how your kid's page is drawn.";
       document.getElementById('childNameLabel').textContent = childCount > 1 ? "Children's names" : "Child's name";
-      document.getElementById('childName').placeholder = childCount > 1 ? 'Ava and Milo' : 'Ava';
+      document.getElementById('childName').placeholder = childCount > 1 ? "Who are the stars? e.g. Ava and Milo" : "Who's the star? Their name, e.g. Ava";
     }
 
     document.querySelectorAll('#themes .theme-pill').forEach(pill => {
@@ -1512,7 +1583,7 @@ document.querySelectorAll('#childCountPicker .theme-pill').forEach(btn => {
     childCount = parseInt(btn.dataset.count, 10);
     if (audience === 'kid') {
       childNameLabel.textContent = childCount > 1 ? "Children's names" : "Child's name";
-      childNameInput.placeholder = childCount > 1 ? 'Ava and Milo' : 'Ava';
+      childNameInput.placeholder = childCount > 1 ? "Who are the stars? e.g. Ava and Milo" : "Who's the star? Their name, e.g. Ava";
     }
   });
 });
@@ -1523,6 +1594,7 @@ const generateError = document.getElementById('generateError');
 const generateStatus = document.getElementById('generateStatus');
 const storyGrid = document.getElementById('storyGrid');
 const paywall = document.getElementById('paywall');
+const unlockBtn = document.getElementById('unlockBtn');
 
 let storyPages = [];
 let cancelRequested = false;
@@ -1540,6 +1612,8 @@ let freePreviewPages = 2;
 const STATE_KEY = 'crayonauts_order_v1';
 let orderId = null;
 let accessToken = null;
+// What the order was started with (see currentBookKey).
+let orderKey = '';
 
 function saveState() {
   try {
@@ -1575,13 +1649,16 @@ async function fetchSceneCount(theme) {
   return 15;
 }
 
-function paintGrid(total) {
+// The free preview paints only its own pages, side by side. After payment the
+// whole book is painted, so its pages can be watched arriving.
+function paintGrid(total, previewOnly) {
   storyGrid.style.display = 'grid';
+  storyGrid.classList.toggle('preview-only', previewOnly === true);
   storyGrid.innerHTML = '';
   for (let i = 0; i < total; i++) {
     const cell = document.createElement('div');
     cell.className = 'story-page pending';
-    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (i < freePreviewPages ? '...' : 'locked');
+    cell.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (previewOnly ? 'drawing...' : (i < freePreviewPages ? '...' : 'locked'));
     storyGrid.appendChild(cell);
   }
 }
@@ -1730,18 +1807,26 @@ stopBtn.addEventListener('click', () => {
   stopBtn.textContent = 'Stopping...';
 });
 
-// Step 2 button: create the order, then draw the free preview pages.
-previewBtn.addEventListener('click', async () => {
-  generateError.style.display = 'none';
-  document.getElementById('childNameError').style.display = 'none';
-  document.getElementById('emailError').style.display = 'none';
+// Everything the drawing depends on. An order is started with these, so if any
+// of them change after the free preview, the book the customer would pay for
+// is not the one they looked at - Unlock starts a fresh order instead.
+function currentBookKey() {
+  return JSON.stringify([
+    bookMode, selectedTheme, audience, childCount, detailLevel,
+    document.getElementById('notes').value.trim(),
+    bookMode === 'family'
+      ? familyCast().map((p) => [p.name.trim(), p.subjectType, p.star === true, (p.dataUrl || '').length])
+      : (photoDataUrl || '').length
+  ]);
+}
 
+// Photo (or photos) and names in a family book - what drawing anything needs.
+// Shows its own error where it belongs and returns null if something is
+// missing, so both buttons can use it.
+function readyToDraw(errorEl) {
   const peopleError = document.getElementById('peopleError');
   peopleError.style.display = 'none';
-
-  let ok = true;
   const cast = bookMode === 'family' ? familyCast() : [];
-
   if (bookMode === 'family') {
     // Refused here rather than at the backend, so nobody waits on a request
     // that cannot work. Two people is what makes it a family book.
@@ -1749,83 +1834,104 @@ previewBtn.addEventListener('click', async () => {
     // A photo sitting in a slot with no name is dropped from the cast, so say
     // so rather than telling someone who has added two photos to add people.
     const photoNoName = people.filter((p) => p.file && !p.name.trim());
+    let msg = '';
     if (photoNoName.length) {
-      peopleError.textContent = photoNoName.length === 1
+      msg = photoNoName.length === 1
         ? 'One photo has no name yet. Type the name above it so we know who it is.'
         : photoNoName.length + ' photos have no name yet. Type the names above them so we know who they are.';
-      peopleError.style.display = 'block';
-      ok = false;
     } else if (named.length < 2) {
-      peopleError.textContent = 'Add at least two people - a child and a grown-up.';
-      peopleError.style.display = 'block';
-      ok = false;
+      msg = 'Add at least two people - a child and a grown-up.';
     } else if (cast.length !== named.length) {
       const missing = named.filter((p) => !p.file).map((p) => p.name.trim());
-      peopleError.textContent = 'Still need a photo of ' + missing.join(' and ') + '.';
+      msg = 'Still need a photo of ' + missing.join(' and ') + '.';
+    }
+    if (msg) {
+      peopleError.textContent = msg;
       peopleError.style.display = 'block';
-      ok = false;
+      if (errorEl) { errorEl.textContent = 'Add everyone in Step 1 first.'; errorEl.style.display = 'block'; }
+      return null;
     }
   } else if (!selectedFile) {
-    generateError.textContent = 'Upload a photo first.';
-    generateError.style.display = 'block';
-    ok = false;
+    if (errorEl) { errorEl.textContent = 'Upload a photo first.'; errorEl.style.display = 'block'; }
+    return null;
   }
+  return { cast };
+}
 
-  // In a family book the name is whoever the story follows, taken from step 1.
-  const starPerson = cast.find((p) => p.star) || cast[0];
-  const childName = bookMode === 'family'
-    ? (starPerson ? starPerson.name.trim() : '')
-    : document.getElementById('childName').value.trim();
-  if (!childName && bookMode !== 'family') {
-    document.getElementById('childNameError').style.display = 'block'; ok = false;
-  }
-  const email = document.getElementById('parentEmail').value.trim();
-  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
-  if (!ok) return;
+// Starts the order the pages are kept on. Name and email are optional here:
+// the free preview is drawn before anyone is asked for them, and they are
+// added at Unlock.
+async function startOrder(cast, childName, email) {
+  const res = await fetch(BACKEND_URL + '/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      childName: childName, childCount: childCount, email: email,
+      theme: selectedTheme,
+      notes: document.getElementById('notes').value.trim(),
+      thumb: null,
+      pageCount: sceneCount,
+      // The server keeps the photo so it can draw the book after payment
+      // without this browser needing to stay open. A family book keeps one
+      // per person instead, in the order the pages introduce them.
+      photo: bookMode === 'family' ? null : photoDataUrl,
+      people: bookMode === 'family' ? cast.map((person) => ({
+        name: person.name.trim(),
+        subjectType: person.subjectType,
+        star: person.star === true,
+        photo: person.dataUrl
+      })) : [],
+      subjectType: audience,
+      detailLevel: detailLevel,
+      // Carried on the order so the sale can be credited to its source even
+      // though payment is confirmed minutes later, by Stripe, not by us.
+      visitor: visitorId,
+      source: trafficSource,
+      campaign: trafficCampaign
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.accessToken) throw new Error('Could not start your order.');
+  orderId = data.order.id;
+  accessToken = data.accessToken;
+  orderKey = currentBookKey();
+  saveState();
+}
+
+function starName(cast) {
+  // In a family book the name is whoever the story follows, from Step 1.
+  const star = cast.find((p) => p.star) || cast[0];
+  return star ? star.name.trim() : '';
+}
+
+// Step 1 button: draw the free preview. Needs a photo and nothing else - no
+// name, no email.
+previewBtn.addEventListener('click', async () => {
+  generateError.style.display = 'none';
+  const ready = readyToDraw(generateError);
+  if (!ready) return;
+  const cast = ready.cast;
 
   track('preview_started');
   previewBtn.disabled = true;
   storyPages = [];
-  paywall.style.display = 'none';
+  document.getElementById('paywallSeen').hidden = true;
   document.getElementById('confirm').style.display = 'none';
 
   try {
     sceneCount = await fetchSceneCount(selectedTheme);
-    paintGrid(sceneCount);
+    paintGrid(freePreviewPages, true);
 
-    const res = await fetch(BACKEND_URL + '/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        childName: childName, childCount: childCount, email: email,
-        theme: selectedTheme,
-        notes: document.getElementById('notes').value.trim(),
-        thumb: null,
-        pageCount: sceneCount,
-        // The server keeps the photo so it can draw the book after payment
-        // without this browser needing to stay open. A family book keeps one
-        // per person instead, in the order the pages introduce them.
-        photo: bookMode === 'family' ? null : photoDataUrl,
-        people: bookMode === 'family' ? cast.map((person) => ({
-          name: person.name.trim(),
-          subjectType: person.subjectType,
-          star: person.star === true,
-          photo: person.dataUrl
-        })) : [],
-        subjectType: audience,
-        detailLevel: detailLevel,
-        // Carried on the order so the sale can be credited to its source even
-        // though payment is confirmed minutes later, by Stripe, not by us.
-        visitor: visitorId,
-        source: trafficSource,
-        campaign: trafficCampaign
-      })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.accessToken) throw new Error('Could not start your order.');
-    orderId = data.order.id;
-    accessToken = data.accessToken;
-    saveState();
+    // The order is what keeps these pages, so they become the first pages of
+    // the paid book instead of being drawn again. A backend too old to start
+    // an order without an email refuses; the preview is drawn anyway and the
+    // order is made at Unlock, the way it used to be.
+    orderId = null;
+    accessToken = null;
+    orderKey = '';
+    try {
+      await startOrder(cast, bookMode === 'family' ? starName(cast) : document.getElementById('childName').value.trim(), '');
+    } catch (e) { /* drawn without an order */ }
 
     await generateRange(0, freePreviewPages, selectedFile, {
       theme: selectedTheme, childCount: childCount, audience: audience,
@@ -1842,8 +1948,8 @@ previewBtn.addEventListener('click', async () => {
       track('preview_shown');
       document.getElementById('previewCountText').textContent = freePreviewPages;
       document.getElementById('totalCountText').textContent = sceneCount;
-      paywall.style.display = 'block';
-      paywall.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('paywallSeen').hidden = false;
+      storyGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   } catch (err) {
     generateError.textContent = err.message || 'Something went wrong. Try again.';
@@ -1852,20 +1958,44 @@ previewBtn.addEventListener('click', async () => {
   previewBtn.disabled = false;
 });
 
-// Paywall button: hand off to Stripe.
-document.getElementById('unlockBtn').addEventListener('click', async () => {
+// Step 2 button: the name and email are asked for here, then off to Stripe.
+const unlockLabel = unlockBtn.innerHTML;
+unlockBtn.addEventListener('click', async () => {
   const payError = document.getElementById('payError');
   payError.style.display = 'none';
-  const btn = document.getElementById('unlockBtn');
+  document.getElementById('childNameError').style.display = 'none';
+  document.getElementById('emailError').style.display = 'none';
+
+  const ready = readyToDraw(payError);
+  if (!ready) return;
+  const cast = ready.cast;
+  const childName = bookMode === 'family' ? starName(cast) : document.getElementById('childName').value.trim();
+  const email = document.getElementById('parentEmail').value.trim();
+  let ok = true;
+  if (!childName && bookMode !== 'family') {
+    document.getElementById('childNameError').style.display = 'block'; ok = false;
+  }
+  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
+  if (!ok) return;
+
   track('unlock_clicked');
-  btn.disabled = true;
-  btn.textContent = 'Taking you to checkout...';
+  unlockBtn.disabled = true;
+  unlockBtn.textContent = 'Taking you to checkout...';
   try {
+    // No preview yet, or Step 1 changed since it was drawn: start the order
+    // for what is on screen now.
+    if (!orderId || !accessToken || orderKey !== currentBookKey()) {
+      if (!storyPages.filter(Boolean).length) sceneCount = await fetchSceneCount(selectedTheme);
+      await startOrder(cast, childName, email);
+    }
     saveState();
     const r = await fetch(BACKEND_URL + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital', code: creatorCode() })
+      body: JSON.stringify({
+        orderId: orderId, token: accessToken, product: 'digital', code: creatorCode(),
+        childName: childName, email: email
+      })
     });
     const d = await r.json();
     if (!r.ok || !d.url) throw new Error(d.detail || d.error || 'Checkout could not be started.');
@@ -1873,8 +2003,8 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
   } catch (err) {
     payError.textContent = err.message;
     payError.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Unlock all pages';
+    unlockBtn.disabled = false;
+    unlockBtn.innerHTML = unlockLabel;
   }
 });
 
@@ -1884,6 +2014,8 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
 async function watchOrder(id, token) {
   orderId = id;
   accessToken = token;
+  // Paid, or opened from the emailed link: there is nothing left to unlock.
+  paywall.style.display = 'none';
   const confirmBox = document.getElementById('confirm');
   const confirmText = document.getElementById('confirmText');
   const titleEl = document.getElementById('confirmTitle');
@@ -2017,6 +2149,7 @@ async function resumeAfterPayment(returnedId) {
   }
   const box = document.getElementById('confirm');
   box.style.display = 'block';
+  paywall.style.display = 'none';
   document.getElementById('confirmTitle').textContent = 'Check your email';
   document.getElementById('confirmText').textContent =
     "Your payment went through and your book is being made. We've emailed you a link to it - open that link to download it when it's ready.";
@@ -2103,8 +2236,23 @@ async function openFromLink(id, token) {
       document.getElementById('notes').value = st.notes || '';
       if (st.detailLevel) showDetailLevel(st.detailLevel);
     }
-    generateError.textContent = 'Checkout was canceled - nothing was charged. Your preview is still here whenever you want to finish.';
-    generateError.style.display = 'block';
+    // The order is still on the server with its photo and any preview pages,
+    // so put it back and Unlock picks up where they left off. A family book's
+    // photos are not kept in this browser, so that one starts again.
+    if (st && st.orderId && st.accessToken && st.photoDataUrl) {
+      photoDataUrl = st.photoDataUrl;
+      selectedFile = dataUrlToFile(st.photoDataUrl);
+      document.getElementById('origPreview').src = st.photoDataUrl;
+      document.getElementById('previews').style.display = 'flex';
+      dropzone.classList.add('filled');
+      if (st.selectedTheme) chooseThemeFromTile(st.selectedTheme);
+      orderId = st.orderId;
+      accessToken = st.accessToken;
+      orderKey = currentBookKey();
+    }
+    const payError = document.getElementById('payError');
+    payError.textContent = 'Checkout was canceled - nothing was charged. Unlock whenever you are ready.';
+    payError.style.display = 'block';
   }
 })();
 
