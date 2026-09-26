@@ -264,7 +264,7 @@ fbq('track', 'PageView');
   @media (max-width: 620px) {
     #styleStrip .strip-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  .preview-box { flex: 1; min-width: 200px; text-align: center; }
+  .preview-box { flex: 0 0 auto; width: 160px; text-align: center; }
   .preview-box canvas, .preview-box img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
   .preview-box p { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
 
@@ -474,7 +474,10 @@ fbq('track', 'PageView');
     #detailPicker .theme-pill { padding: 7px 12px; }
     .page { padding: 24px 20px; }
   }
-  .cta-row { display: flex; gap: 10px; margin-top: 4px; }
+  .cta-row { display: flex; gap: 10px; margin-top: 20px; }
+  .unlock-btn { width: auto; margin-top: 4px; border-radius: 999px; padding: 12px 30px; }
+  .paywall-seen { margin: 0 0 12px; font-size: 14px; color: var(--ink-soft); }
+  .paywall-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
   .cta-row .submit-btn { width: auto; margin-top: 0; border-radius: 999px; padding: 12px 30px; }
   .sample-grid {
     display: grid;
@@ -881,32 +884,19 @@ fbq('track', 'PageView');
       </div>
       </div>
     </div>
-  </div>
-
-  <div class="step-arrow" aria-hidden="true">&darr;</div>
-
-  <div class="page">
-    <div class="step-label" id="styleStepLabel">Step 2</div>
-    <h2>Name + email</h2>
-
-    <label class="field">
-      <span class="sr-only" id="childNameLabel">Child's name</span>
-      <input type="text" id="childName" placeholder="Who's the star? Their name, e.g. Ava" autocomplete="off">
-      <div class="error-text" id="childNameError">Enter the child's name.</div>
-    </label>
     <!-- Not "how old is the child in the photo". The drawing always looks like
          whoever is in the photo; this only decides how much is in the picture,
          so it is worded around the person holding the crayon. Shown in both
-         flows - a family book hides the name field above but still needs
-         this. -->
-    <div class="detail-block">
+         flows. It changes the drawing, so it is chosen before the free
+         preview, not after. -->
+    <div class="detail-block" style="margin-top:18px;">
       <span class="intake-label">Who's coloring it?</span>
       <div class="detail-row">
-  <div class="themes" id="detailPicker">
-        <button type="button" class="theme-pill" data-detail="simple">Simple<span class="ages">ages 3-4</span></button>
-        <button type="button" class="theme-pill active" data-detail="standard">Standard<span class="ages">ages 5-7</span></button>
-        <button type="button" class="theme-pill" data-detail="detailed">Detailed<span class="ages">ages 8+</span></button>
-      </div>
+        <div class="themes" id="detailPicker">
+          <button type="button" class="theme-pill" data-detail="simple">Simple<span class="ages">ages 3-4</span></button>
+          <button type="button" class="theme-pill active" data-detail="standard">Standard<span class="ages">ages 5-7</span></button>
+          <button type="button" class="theme-pill" data-detail="detailed">Detailed<span class="ages">ages 8+</span></button>
+        </div>
         <button type="button" class="more-btn" id="moreOptionsBtn" aria-expanded="false" aria-controls="moreOptions">More options <span aria-hidden="true">&#9662;</span></button>
       </div>
     </div>
@@ -935,11 +925,6 @@ fbq('track', 'PageView');
         <textarea id="notes" placeholder="Favorite animal, a pet's name, favorite color..."></textarea>
       </label>
     </div>
-    <label class="field">
-      <span class="sr-only">Your email</span>
-      <input type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
-      <div class="error-text" id="emailError">Enter a valid email.</div>
-    </label>
 
     <div class="cta-row">
       <button type="button" class="submit-btn" id="previewBtn" style="margin-top:0;">See my free preview</button>
@@ -949,17 +934,37 @@ fbq('track', 'PageView');
     <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
 
     <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+  </div>
 
-    <div id="paywall" style="display:none; margin-top:20px; border:2px solid #2F5FA8; border-radius:14px; padding:18px; text-align:center;">
-      <h3 style="margin:0 0 6px; font-family:'Baloo 2', sans-serif;">Unlock the full book</h3>
-      <p style="margin:0 0 4px; color:var(--ink-soft); font-size:14px;">
+  <div class="step-arrow" aria-hidden="true">&darr;</div>
+
+  <div class="page">
+    <div class="step-label" id="styleStepLabel">Step 2</div>
+    <h2>Name + email</h2>
+
+    <label class="field">
+      <span class="sr-only" id="childNameLabel">Child's name</span>
+      <input type="text" id="childName" placeholder="Who's the star? Their name, e.g. Ava" autocomplete="off">
+      <div class="error-text" id="childNameError">Enter the child's name.</div>
+    </label>
+    <label class="field">
+      <span class="sr-only">Your email</span>
+      <input type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
+      <div class="error-text" id="emailError">Enter a valid email.</div>
+    </label>
+
+    <!-- Unlock. Always here, so someone who has seen enough (or has used up
+         the free drawings for today) can buy straight away. The name and email
+         above are only asked for now, at payment - the free preview in Step 1
+         needs neither. -->
+    <div id="paywall">
+      <p class="paywall-seen" id="paywallSeen" hidden>
         You have seen <span id="previewCountText">2</span> pages free. Unlock all <span id="totalCountText">15</span>
         and download the whole book as a print-ready PDF.
       </p>
-      <p style="margin:0 0 14px; font-size:28px; font-weight:800; font-family:'Baloo 2', sans-serif;" id="priceText">$15</p>
-      <button type="button" class="submit-btn" id="unlockBtn" style="margin-top:0;">Unlock all pages</button>
+      <button type="button" class="submit-btn unlock-btn" id="unlockBtn">Unlock now &mdash; <span id="priceText">$15</span></button>
       <div class="error-text" id="payError">Could not start checkout.</div>
-      <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">Secure checkout by Stripe. Card details never touch our server.</p>
+      <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
     </div>
 
     <div class="confirm" id="confirm">
@@ -1288,20 +1293,20 @@ async function runStyleStrip(file) {
     if (res.status === 429 && data.advanceToNextStep) { sendToNextStep(); return; }
     if (!res.ok) {
       stripHead.textContent = 'The styles could not be drawn';
-      stripSub.textContent = (data && data.error) || 'You can still pick a style below and carry on.';
+      stripSub.textContent = (data && data.error) || 'You can still pick a style above and carry on.';
       stripGrid.innerHTML = '';
       return;
     }
     const drawn = (data.styles || []).filter((t) => t.image);
     if (!drawn.length) { styleStrip.style.display = 'none'; return; }
     stripHead.textContent = 'Your photo, in four styles';
-    stripSub.textContent = 'Tap one you like and we will set it as your style below.';
+    stripSub.textContent = 'Tap one you like and we will set it as your style above.';
     paintStrip(data.styles, { drawing: false });
     track('style_strip_shown');
   } catch (e) {
     if (run !== stripRun) return;
     stripHead.textContent = 'The styles could not be drawn';
-    stripSub.textContent = 'You can still pick a style below and carry on.';
+    stripSub.textContent = 'You can still pick a style above and carry on.';
     stripGrid.innerHTML = '';
   }
 }
@@ -1317,9 +1322,14 @@ function resetBook() {
   liveRequests.clear();
   storyGrid.style.display = 'none';
   storyGrid.innerHTML = '';
-  document.getElementById('paywall').style.display = 'none';
+  document.getElementById('paywallSeen').hidden = true;
   document.getElementById('confirm').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
+  // The order carries the photo it was started with, so a new photo needs a
+  // new one - Unlock makes it if no preview does first.
+  orderId = null;
+  accessToken = null;
+  orderKey = '';
 }
 
 let selectedTheme = 'Portrait';
@@ -1723,6 +1733,7 @@ const generateError = document.getElementById('generateError');
 const generateStatus = document.getElementById('generateStatus');
 const storyGrid = document.getElementById('storyGrid');
 const paywall = document.getElementById('paywall');
+const unlockBtn = document.getElementById('unlockBtn');
 
 let storyPages = [];
 let cancelRequested = false;
@@ -1740,6 +1751,8 @@ let freePreviewPages = 2;
 const STATE_KEY = 'crayonauts_order_v1';
 let orderId = null;
 let accessToken = null;
+// What the order was started with (see currentBookKey).
+let orderKey = '';
 
 function saveState() {
   try {
@@ -1930,18 +1943,26 @@ stopBtn.addEventListener('click', () => {
   stopBtn.textContent = 'Stopping...';
 });
 
-// Step 2 button: create the order, then draw the free preview pages.
-previewBtn.addEventListener('click', async () => {
-  generateError.style.display = 'none';
-  document.getElementById('childNameError').style.display = 'none';
-  document.getElementById('emailError').style.display = 'none';
+// Everything the drawing depends on. An order is started with these, so if any
+// of them change after the free preview, the book the customer would pay for
+// is not the one they looked at - Unlock starts a fresh order instead.
+function currentBookKey() {
+  return JSON.stringify([
+    bookMode, selectedTheme, audience, childCount, detailLevel,
+    document.getElementById('notes').value.trim(),
+    bookMode === 'family'
+      ? familyCast().map((p) => [p.name.trim(), p.subjectType, p.star === true, (p.dataUrl || '').length])
+      : (photoDataUrl || '').length
+  ]);
+}
 
+// Photo (or photos) and names in a family book - what drawing anything needs.
+// Shows its own error where it belongs and returns null if something is
+// missing, so both buttons can use it.
+function readyToDraw(errorEl) {
   const peopleError = document.getElementById('peopleError');
   peopleError.style.display = 'none';
-
-  let ok = true;
   const cast = bookMode === 'family' ? familyCast() : [];
-
   if (bookMode === 'family') {
     // Refused here rather than at the backend, so nobody waits on a request
     // that cannot work. Two people is what makes it a family book.
@@ -1949,83 +1970,104 @@ previewBtn.addEventListener('click', async () => {
     // A photo sitting in a slot with no name is dropped from the cast, so say
     // so rather than telling someone who has added two photos to add people.
     const photoNoName = people.filter((p) => p.file && !p.name.trim());
+    let msg = '';
     if (photoNoName.length) {
-      peopleError.textContent = photoNoName.length === 1
+      msg = photoNoName.length === 1
         ? 'One photo has no name yet. Type the name above it so we know who it is.'
         : photoNoName.length + ' photos have no name yet. Type the names above them so we know who they are.';
-      peopleError.style.display = 'block';
-      ok = false;
     } else if (named.length < 2) {
-      peopleError.textContent = 'Add at least two people - a child and a grown-up.';
-      peopleError.style.display = 'block';
-      ok = false;
+      msg = 'Add at least two people - a child and a grown-up.';
     } else if (cast.length !== named.length) {
       const missing = named.filter((p) => !p.file).map((p) => p.name.trim());
-      peopleError.textContent = 'Still need a photo of ' + missing.join(' and ') + '.';
+      msg = 'Still need a photo of ' + missing.join(' and ') + '.';
+    }
+    if (msg) {
+      peopleError.textContent = msg;
       peopleError.style.display = 'block';
-      ok = false;
+      if (errorEl) { errorEl.textContent = 'Add everyone in Step 1 first.'; errorEl.style.display = 'block'; }
+      return null;
     }
   } else if (!selectedFile) {
-    generateError.textContent = 'Upload a photo first.';
-    generateError.style.display = 'block';
-    ok = false;
+    if (errorEl) { errorEl.textContent = 'Upload a photo first.'; errorEl.style.display = 'block'; }
+    return null;
   }
+  return { cast };
+}
 
-  // In a family book the name is whoever the story follows, taken from step 1.
-  const starPerson = cast.find((p) => p.star) || cast[0];
-  const childName = bookMode === 'family'
-    ? (starPerson ? starPerson.name.trim() : '')
-    : document.getElementById('childName').value.trim();
-  if (!childName && bookMode !== 'family') {
-    document.getElementById('childNameError').style.display = 'block'; ok = false;
-  }
-  const email = document.getElementById('parentEmail').value.trim();
-  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
-  if (!ok) return;
+// Starts the order the pages are kept on. Name and email are optional here:
+// the free preview is drawn before anyone is asked for them, and they are
+// added at Unlock.
+async function startOrder(cast, childName, email) {
+  const res = await fetch(BACKEND_URL + '/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      childName: childName, childCount: childCount, email: email,
+      theme: selectedTheme,
+      notes: document.getElementById('notes').value.trim(),
+      thumb: null,
+      pageCount: sceneCount,
+      // The server keeps the photo so it can draw the book after payment
+      // without this browser needing to stay open. A family book keeps one
+      // per person instead, in the order the pages introduce them.
+      photo: bookMode === 'family' ? null : photoDataUrl,
+      people: bookMode === 'family' ? cast.map((person) => ({
+        name: person.name.trim(),
+        subjectType: person.subjectType,
+        star: person.star === true,
+        photo: person.dataUrl
+      })) : [],
+      subjectType: audience,
+      detailLevel: detailLevel,
+      // Carried on the order so the sale can be credited to its source even
+      // though payment is confirmed minutes later, by Stripe, not by us.
+      visitor: visitorId,
+      source: trafficSource,
+      campaign: trafficCampaign
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.accessToken) throw new Error('Could not start your order.');
+  orderId = data.order.id;
+  accessToken = data.accessToken;
+  orderKey = currentBookKey();
+  saveState();
+}
+
+function starName(cast) {
+  // In a family book the name is whoever the story follows, from Step 1.
+  const star = cast.find((p) => p.star) || cast[0];
+  return star ? star.name.trim() : '';
+}
+
+// Step 1 button: draw the free preview. Needs a photo and nothing else - no
+// name, no email.
+previewBtn.addEventListener('click', async () => {
+  generateError.style.display = 'none';
+  const ready = readyToDraw(generateError);
+  if (!ready) return;
+  const cast = ready.cast;
 
   track('preview_started');
   previewBtn.disabled = true;
   storyPages = [];
-  paywall.style.display = 'none';
+  document.getElementById('paywallSeen').hidden = true;
   document.getElementById('confirm').style.display = 'none';
 
   try {
     sceneCount = await fetchSceneCount(selectedTheme);
     paintGrid(sceneCount);
 
-    const res = await fetch(BACKEND_URL + '/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        childName: childName, childCount: childCount, email: email,
-        theme: selectedTheme,
-        notes: document.getElementById('notes').value.trim(),
-        thumb: null,
-        pageCount: sceneCount,
-        // The server keeps the photo so it can draw the book after payment
-        // without this browser needing to stay open. A family book keeps one
-        // per person instead, in the order the pages introduce them.
-        photo: bookMode === 'family' ? null : photoDataUrl,
-        people: bookMode === 'family' ? cast.map((person) => ({
-          name: person.name.trim(),
-          subjectType: person.subjectType,
-          star: person.star === true,
-          photo: person.dataUrl
-        })) : [],
-        subjectType: audience,
-        detailLevel: detailLevel,
-        // Carried on the order so the sale can be credited to its source even
-        // though payment is confirmed minutes later, by Stripe, not by us.
-        visitor: visitorId,
-        source: trafficSource,
-        campaign: trafficCampaign
-      })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.accessToken) throw new Error('Could not start your order.');
-    orderId = data.order.id;
-    accessToken = data.accessToken;
-    saveState();
+    // The order is what keeps these pages, so they become the first pages of
+    // the paid book instead of being drawn again. A backend too old to start
+    // an order without an email refuses; the preview is drawn anyway and the
+    // order is made at Unlock, the way it used to be.
+    orderId = null;
+    accessToken = null;
+    orderKey = '';
+    try {
+      await startOrder(cast, bookMode === 'family' ? starName(cast) : document.getElementById('childName').value.trim(), '');
+    } catch (e) { /* drawn without an order */ }
 
     await generateRange(0, freePreviewPages, selectedFile, {
       theme: selectedTheme, childCount: childCount, audience: audience,
@@ -2042,8 +2084,8 @@ previewBtn.addEventListener('click', async () => {
       track('preview_shown');
       document.getElementById('previewCountText').textContent = freePreviewPages;
       document.getElementById('totalCountText').textContent = sceneCount;
-      paywall.style.display = 'block';
-      paywall.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('paywallSeen').hidden = false;
+      storyGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   } catch (err) {
     generateError.textContent = err.message || 'Something went wrong. Try again.';
@@ -2052,20 +2094,44 @@ previewBtn.addEventListener('click', async () => {
   previewBtn.disabled = false;
 });
 
-// Paywall button: hand off to Stripe.
-document.getElementById('unlockBtn').addEventListener('click', async () => {
+// Step 2 button: the name and email are asked for here, then off to Stripe.
+const unlockLabel = unlockBtn.innerHTML;
+unlockBtn.addEventListener('click', async () => {
   const payError = document.getElementById('payError');
   payError.style.display = 'none';
-  const btn = document.getElementById('unlockBtn');
+  document.getElementById('childNameError').style.display = 'none';
+  document.getElementById('emailError').style.display = 'none';
+
+  const ready = readyToDraw(payError);
+  if (!ready) return;
+  const cast = ready.cast;
+  const childName = bookMode === 'family' ? starName(cast) : document.getElementById('childName').value.trim();
+  const email = document.getElementById('parentEmail').value.trim();
+  let ok = true;
+  if (!childName && bookMode !== 'family') {
+    document.getElementById('childNameError').style.display = 'block'; ok = false;
+  }
+  if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
+  if (!ok) return;
+
   track('unlock_clicked');
-  btn.disabled = true;
-  btn.textContent = 'Taking you to checkout...';
+  unlockBtn.disabled = true;
+  unlockBtn.textContent = 'Taking you to checkout...';
   try {
+    // No preview yet, or Step 1 changed since it was drawn: start the order
+    // for what is on screen now.
+    if (!orderId || !accessToken || orderKey !== currentBookKey()) {
+      if (!storyPages.filter(Boolean).length) sceneCount = await fetchSceneCount(selectedTheme);
+      await startOrder(cast, childName, email);
+    }
     saveState();
     const r = await fetch(BACKEND_URL + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: orderId, token: accessToken, product: 'digital', code: creatorCode() })
+      body: JSON.stringify({
+        orderId: orderId, token: accessToken, product: 'digital', code: creatorCode(),
+        childName: childName, email: email
+      })
     });
     const d = await r.json();
     if (!r.ok || !d.url) throw new Error(d.detail || d.error || 'Checkout could not be started.');
@@ -2073,8 +2139,8 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
   } catch (err) {
     payError.textContent = err.message;
     payError.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Unlock all pages';
+    unlockBtn.disabled = false;
+    unlockBtn.innerHTML = unlockLabel;
   }
 });
 
@@ -2084,6 +2150,8 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
 async function watchOrder(id, token) {
   orderId = id;
   accessToken = token;
+  // Paid, or opened from the emailed link: there is nothing left to unlock.
+  paywall.style.display = 'none';
   const confirmBox = document.getElementById('confirm');
   const confirmText = document.getElementById('confirmText');
   const titleEl = document.getElementById('confirmTitle');
@@ -2217,6 +2285,7 @@ async function resumeAfterPayment(returnedId) {
   }
   const box = document.getElementById('confirm');
   box.style.display = 'block';
+  paywall.style.display = 'none';
   document.getElementById('confirmTitle').textContent = 'Check your email';
   document.getElementById('confirmText').textContent =
     "Your payment went through and your book is being made. We've emailed you a link to it - open that link to download it when it's ready.";
@@ -2303,8 +2372,22 @@ async function openFromLink(id, token) {
       document.getElementById('notes').value = st.notes || '';
       if (st.detailLevel) showDetailLevel(st.detailLevel);
     }
-    generateError.textContent = 'Checkout was canceled - nothing was charged. Your preview is still here whenever you want to finish.';
-    generateError.style.display = 'block';
+    // The order is still on the server with its photo and any preview pages,
+    // so put it back and Unlock picks up where they left off. A family book's
+    // photos are not kept in this browser, so that one starts again.
+    if (st && st.orderId && st.accessToken && st.photoDataUrl) {
+      photoDataUrl = st.photoDataUrl;
+      selectedFile = dataUrlToFile(st.photoDataUrl);
+      document.getElementById('origPreview').src = st.photoDataUrl;
+      document.getElementById('previews').style.display = 'flex';
+      if (st.selectedTheme) chooseThemeFromTile(st.selectedTheme);
+      orderId = st.orderId;
+      accessToken = st.accessToken;
+      orderKey = currentBookKey();
+    }
+    const payError = document.getElementById('payError');
+    payError.textContent = 'Checkout was canceled - nothing was charged. Unlock whenever you are ready.';
+    payError.style.display = 'block';
   }
 })();
 
