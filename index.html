@@ -390,7 +390,8 @@ fbq('track', 'PageView');
   #careerPill:not(.active) select { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; }
   #careerPill:not(.active) .career-label::after { content: ' \25BE'; }
   #careerPill.active .career-label { display: none; }
-  .intake-row--split .theme-pill { padding: 8px 15px; }
+  .intake-row--split .theme-pill { padding: 6px 12px; font-size: 13px; }
+  .intake-row--split .themes { gap: 6px 8px; }
 
   .samples { padding-bottom: 20px; }
 
@@ -745,19 +746,16 @@ fbq('track', 'PageView');
       </div>
       <div class="intake-divider" aria-hidden="true"></div>
       <div class="themes" id="themes">
-        <!-- The real style buttons. Hidden: they hold the state every handler
-             reads, and the dropdown beside them just mirrors and clicks them. -->
-        <div class="theme-src" hidden>
-          <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
-          <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
-          <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
-          <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
-          <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
-          <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
-        </div>
-        <span class="theme-pill career-pill style-pill active" id="stylePill" data-audience="both">
-          <select id="themeSelect" aria-label="Pick a style"></select>
-        </span>
+        <!-- Style pills, visible again: with the dropdown, every ad visitor on
+             26 Sep left the default (Portrait); with pills they picked
+             Fairy tale, Adventure, Superhero, Doctor. Smaller so they fit
+             beside the Personal/Family toggle. -->
+        <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
+        <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
+        <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
+        <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
+        <button type="button" class="theme-pill" data-theme="Grandparent Garden" data-audience="adult" style="display:none;">Garden day</button>
+        <button type="button" class="theme-pill" data-theme="Family Keepsake" data-audience="adult" style="display:none;">Family keepsake</button>
         <span class="theme-pill career-pill" id="careerPill" data-audience="kid">
           <span class="career-label">When I grow up</span>
           <select id="careerSelect" aria-label="Pick a career">
@@ -1145,8 +1143,6 @@ function resetBook() {
 let selectedTheme = 'Portrait';
 const careerPill = document.getElementById('careerPill');
 const careerSelect = document.getElementById('careerSelect');
-const stylePill = document.getElementById('stylePill');
-const themeSelect = document.getElementById('themeSelect');
 
 function activatePill(el) {
   document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
@@ -1154,7 +1150,7 @@ function activatePill(el) {
 }
 
 document.querySelectorAll('#themes .theme-pill').forEach(btn => {
-  if (btn === careerPill || btn === stylePill) return;   // the dropdown pills have their own handlers
+  if (btn === careerPill) return;   // the career pill has its own handlers
   btn.addEventListener('click', () => {
     activatePill(btn);
     selectedTheme = btn.dataset.theme;
@@ -1175,43 +1171,6 @@ careerSelect.addEventListener('change', () => {
   selectedTheme = careerSelect.value;
 });
 
-// The style dropdown. The hidden buttons in #themes .theme-src are still the
-// real state - the audience filter shows/hides them and every other handler
-// activates them - so this only lists the ones currently allowed, shows the
-// active one, and picking an option clicks the matching button.
-const themeButtons = Array.from(document.querySelectorAll('#themes .theme-src .theme-pill'));
-function syncStyleSelect() {
-  const allowed = themeButtons.filter((b) => b.style.display !== 'none');
-  const wanted = allowed.map((b) => b.dataset.theme + '|' + b.textContent).join(',');
-  if (themeSelect.dataset.list !== wanted) {
-    themeSelect.innerHTML = '';
-    allowed.forEach((b) => {
-      const o = document.createElement('option');
-      o.value = b.dataset.theme;
-      o.textContent = b.textContent;
-      themeSelect.appendChild(o);
-    });
-    themeSelect.dataset.list = wanted;
-  }
-  const active = themeButtons.find((b) => b.classList.contains('active') && b.style.display !== 'none');
-  if (active) themeSelect.value = active.dataset.theme;
-  stylePill.classList.toggle('active', !!active);
-}
-themeSelect.addEventListener('change', () => {
-  const btn = themeButtons.find((b) => b.dataset.theme === themeSelect.value);
-  if (btn) btn.click();
-});
-stylePill.addEventListener('click', (e) => {
-  const btn = themeButtons.find((b) => b.dataset.theme === themeSelect.value);
-  if (btn && !btn.classList.contains('active')) btn.click();
-  if (e.target !== themeSelect && typeof themeSelect.showPicker === 'function') {
-    try { themeSelect.showPicker(); } catch (err) { themeSelect.focus(); }
-  }
-});
-new MutationObserver(syncStyleSelect).observe(document.querySelector('#themes .theme-src'), {
-  subtree: true, attributes: true, attributeFilter: ['class', 'style']
-});
-syncStyleSelect();
 
 // Kid or grown-up, how many in the photo, and story notes live behind this so
 // the step stays as short as the mockup. The defaults are what most people want.
