@@ -1140,6 +1140,7 @@ function resetBook() {
   orderId = null;
   accessToken = null;
   orderKey = '';
+  resumedOrder = false;
 }
 
 let selectedTheme = 'Portrait';
@@ -1474,6 +1475,10 @@ let freePreviewPages = 2;
 // to Stripe and back.
 const STATE_KEY = 'crayonauts_order_v1';
 let orderId = null;
+// True when this page was opened from a "come back to your book" link for an
+// order that is not paid yet: the photo and preview live on the server, so
+// Unlock goes straight to checkout without asking for a photo again.
+let resumedOrder = false;
 let accessToken = null;
 // What the order was started with (see currentBookKey).
 let orderKey = '';
@@ -1814,9 +1819,15 @@ unlockBtn.addEventListener('click', async () => {
   document.getElementById('childNameError').style.display = 'none';
   document.getElementById('emailError').style.display = 'none';
 
-  const ready = readyToDraw(payError);
-  if (!ready) return;
-  const cast = ready.cast;
+  // Opened from a "come back to your book" link: the order and its photo are
+  // on the server already, so nothing has to be uploaded again to pay.
+  const resumed = !!(resumedOrder && orderId && accessToken);
+  let cast = [];
+  if (!resumed) {
+    const ready = readyToDraw(payError);
+    if (!ready) return;
+    cast = ready.cast;
+  }
   // Asked in both kinds of book: it is who the book is for, and the name the
   // book, the receipt and the emails use.
   const childName = document.getElementById('childName').value.trim();
@@ -1834,7 +1845,7 @@ unlockBtn.addEventListener('click', async () => {
   try {
     // No preview yet, or Step 1 changed since it was drawn: start the order
     // for what is on screen now.
-    if (!orderId || !accessToken || orderKey !== currentBookKey()) {
+    if (!resumed && (!orderId || !accessToken || orderKey !== currentBookKey())) {
       if (!storyPages.filter(Boolean).length) sceneCount = await fetchSceneCount(selectedTheme);
       await startOrder(cast, childName, email);
     }
@@ -2052,7 +2063,49 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 // Opening the link we emailed: ?order=N#t=TOKEN
 // The token sits in the fragment so it never reaches a server log.
 async function openFromLink(id, token) {
+  // Paid: watch the book arrive. Not paid: this is somebody coming back to a
+  // preview they walked away from - show them their two pages and Unlock.
+  let acc = null;
+  try {
+    const r = await fetch(BACKEND_URL + '/orders/' + id + '/access?token=' + encodeURIComponent(token));
+    if (r.ok) acc = await r.json();
+  } catch (e) {}
+  if (acc && !acc.paid) return resumeUnpaid(id, token, acc);
   return watchOrder(id, token);
+}
+
+async function resumeUnpaid(id, token, acc) {
+  orderId = id;
+  accessToken = token;
+  resumedOrder = true;
+  selectedTheme = acc.theme || selectedTheme;
+  if (acc.peopleCount >= 2 && bookMode !== 'family') {
+    bookMode = 'family';
+    document.querySelectorAll('#bookModePicker .theme-pill').forEach((b) => b.classList.toggle('active', b.dataset.mode === 'family'));
+    applyBookMode();
+  }
+  if (acc.childName) document.getElementById('childName').value = acc.childName;
+  if (acc.email) document.getElementById('parentEmail').value = acc.email;
+  sceneCount = acc.pageCount || sceneCount || 15;
+
+  paintGrid(freePreviewPages, true);
+  try {
+    const pr = await fetch(BACKEND_URL + '/orders/' + id + '/pages?token=' + encodeURIComponent(token));
+    const pd = await pr.json();
+    (pd.pages || []).forEach((p) => {
+      storyPages[p.sceneIndex] = p.image;
+      const cell = storyGrid.children[p.sceneIndex];
+      if (cell) {
+        cell.classList.remove('pending');
+        cell.innerHTML = '<span class="num">' + (p.sceneIndex + 1) + '</span><img src="' + p.image + '" alt="Page ' + (p.sceneIndex + 1) + '">';
+      }
+    });
+  } catch (e) {}
+  document.getElementById('previewCountText').textContent = freePreviewPages;
+  document.getElementById('totalCountText').textContent = sceneCount;
+  document.getElementById('paywallSeen').hidden = false;
+  showPrice();
+  storyGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // On load: did we just come back from Stripe, or open an emailed link?
