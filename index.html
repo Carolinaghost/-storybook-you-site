@@ -623,6 +623,21 @@ fbq('track', 'PageView');
   ]
 }
 </script>
+<!-- Trybe Attribution Pixel (Custom Domain) -->
+<script>
+(function(w,d,p,s,u,pl,at) {
+  w._trybe = w._trybe || { pixelCode: p, storeId: s, platform: pl, autoTracking: at, customDomain: 'track.crayonauts.com', serviceUrl: 'https://prod-trybe-platform-6mi3j.ondigitalocean.app/attribution' };
+  var script = d.createElement('script');
+  script.src = u + '/pixel.js';
+  script.async = true;
+  script.setAttribute('data-pixel-code', p);
+  script.setAttribute('data-store-id', s);
+  script.setAttribute('data-platform', pl);
+  script.setAttribute('data-auto-tracking', at);
+  d.head.appendChild(script);
+})(window, document, 'px_211dfbef00f1', '7715c0d8-d693-48e9-8c3b-866630920e2d', 'https://track.crayonauts.com', 'CUSTOM', 'false');
+</script>
+<!-- End Trybe Attribution Pixel -->
 </head>
 <body>
 <div class="wrap">
@@ -2130,6 +2145,20 @@ async function resumeUnpaid(id, token, acc) {
     try { already = sessionStorage.getItem(sold) === '1'; } catch (err) { /* private mode */ }
     if (!already) {
       fbTrack('Purchase', { value: isFinite(amt) ? amt : 0, currency: 'USD' });
+      // Trybe credits the creator whose link brought this buyer. Only the order
+      // number and the amount go - no name, no email. Queued through
+      // _trybe.ready because the script loads async and may not be here yet.
+      try {
+        var trybeOrder = params.get('order');
+        var trybeValue = isFinite(amt) ? amt : 0;
+        if (window._trybe) {
+          (window._trybe.ready = window._trybe.ready || []).push(function () {
+            if (window.trybe && window.trybe.checkout) {
+              window.trybe.checkout({ orderId: trybeOrder, value: trybeValue, currency: 'USD' });
+            }
+          });
+        }
+      } catch (err) { /* measurement must never break the page */ }
       try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
     }
     resumeAfterPayment(params.get('order'));
