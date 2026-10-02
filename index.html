@@ -390,6 +390,11 @@ fbq('track', 'PageView');
   #careerPill:not(.active) select { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; }
   #careerPill:not(.active) .career-label::after { content: ' \25BE'; }
   #careerPill.active .career-label { display: none; }
+  /* The holiday pill is the same thing: "Holiday" until one is picked. */
+  #holidayPill { position: relative; }
+  #holidayPill:not(.active) select { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; }
+  #holidayPill:not(.active) .career-label::after { content: ' \25BE'; }
+  #holidayPill.active .career-label { display: none; }
   .intake-row--split .theme-pill { padding: 6px 12px; font-size: 13px; }
   .intake-row--split .themes { gap: 6px 8px; }
 
@@ -764,6 +769,16 @@ fbq('track', 'PageView');
             <option value="Doctor">Doctor</option>
           </select>
         </span>
+        <!-- Built exactly like the career pill. For everyone: a kid, a grown-up
+             star and a whole family all get a birthday. -->
+        <span class="theme-pill career-pill" id="holidayPill" data-audience="both">
+          <span class="career-label">Holiday</span>
+          <select id="holidaySelect" aria-label="Pick a holiday">
+            <option value="Halloween">Halloween</option>
+            <option value="Christmas">Christmas</option>
+            <option value="Birthday">Birthday</option>
+          </select>
+        </span>
       </div>
     </div>
     <p class="step-desc intake-note" id="themeStepDesc" hidden>The style decides how the pages are drawn.</p>
@@ -1103,7 +1118,7 @@ async function handleFile(file) {
 
 // Sets the style by name - used to put a saved order's style back. Police
 // Officer lives in the "when I grow up" dropdown rather than having a pill of
-// its own.
+// its own, and the holidays live in the "Holiday" one.
 function chooseThemeFromTile(theme) {
   const pill = document.querySelector('#themes .theme-pill[data-theme="' + theme + '"]');
   if (pill) {
@@ -1115,6 +1130,13 @@ function chooseThemeFromTile(theme) {
   if (option) {
     careerSelect.value = theme;
     activatePill(careerPill);
+    selectedTheme = theme;
+    return true;
+  }
+  const holiday = holidaySelect.querySelector('option[value="' + theme + '"]');
+  if (holiday) {
+    holidaySelect.value = theme;
+    activatePill(holidayPill);
     selectedTheme = theme;
     return true;
   }
@@ -1144,6 +1166,8 @@ function resetBook() {
 let selectedTheme = 'Portrait';
 const careerPill = document.getElementById('careerPill');
 const careerSelect = document.getElementById('careerSelect');
+const holidayPill = document.getElementById('holidayPill');
+const holidaySelect = document.getElementById('holidaySelect');
 
 function activatePill(el) {
   document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
@@ -1151,7 +1175,7 @@ function activatePill(el) {
 }
 
 document.querySelectorAll('#themes .theme-pill').forEach(btn => {
-  if (btn === careerPill) return;   // the career pill has its own handlers
+  if (btn === careerPill || btn === holidayPill) return;   // the dropdown pills have their own handlers
   btn.addEventListener('click', () => {
     activatePill(btn);
     selectedTheme = btn.dataset.theme;
@@ -1170,6 +1194,18 @@ careerPill.addEventListener('click', (e) => {
 careerSelect.addEventListener('change', () => {
   activatePill(careerPill);
   selectedTheme = careerSelect.value;
+});
+// The holiday pill works the same way.
+holidayPill.addEventListener('click', (e) => {
+  activatePill(holidayPill);
+  selectedTheme = holidaySelect.value;
+  if (e.target !== holidaySelect && typeof holidaySelect.showPicker === 'function') {
+    try { holidaySelect.showPicker(); } catch (err) { holidaySelect.focus(); }
+  }
+});
+holidaySelect.addEventListener('change', () => {
+  activatePill(holidayPill);
+  selectedTheme = holidaySelect.value;
 });
 
 
