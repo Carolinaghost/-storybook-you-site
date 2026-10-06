@@ -288,7 +288,7 @@ async function loadCreators() {
       ? 'Sales could not be read from Stripe just now, so those two columns are blank rather than zero.'
       : (data.salesComplete === false
           ? 'Revenue is a partial total - there are more Stripe sessions than this page walks.'
-          : sellers + ' of ' + list.length + ' have sold anything. What you owe each week comes from the Friday payout email, not from here.');
+          : sellers + ' of ' + list.length + ' have sold anything. What you owe each week comes from the Saturday payout email, not from here.');
   } catch (err) {
     /* the creators list is a nice-to-have; never let it break the orders view */
   }
