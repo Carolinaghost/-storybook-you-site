@@ -466,6 +466,19 @@ fbq('track', 'PageView');
   .unlock-btn { width: auto; margin-top: 4px; border-radius: 999px; padding: 12px 30px; }
   .paywall-seen { margin: 0 0 12px; font-size: 14px; color: var(--ink-soft); }
   .paywall-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+  /* Digital, or digital plus a printed copy. Only shown once the backend says
+     printed copies are on. */
+  .print-choice { display: grid; gap: 8px; margin: 0 0 14px; text-align: left; }
+  .print-choice[hidden] { display: none; }
+  .print-opt { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 2px solid var(--line);
+    border-radius: 14px; background: var(--card); cursor: pointer; font-size: 14px; line-height: 1.35; }
+  .print-opt input { accent-color: var(--orange); width: 18px; height: 18px; flex: none; margin: 0; }
+  .print-opt .opt-text { flex: 1; }
+  .print-opt .opt-text small { display: block; color: var(--ink-soft); font-size: 12.5px; }
+  .print-opt .opt-price { font-weight: 700; white-space: nowrap; }
+  .print-opt:has(input:checked) { border-color: var(--orange); background: #FFF6EF; }
+  .print-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--brand-coral);
+    color: #fff; font-size: 11px; font-weight: 700; vertical-align: 1px; }
   .cta-row .submit-btn { width: auto; margin-top: 0; border-radius: 999px; padding: 12px 30px; }
   .sample-grid {
     display: grid;
@@ -934,6 +947,20 @@ fbq('track', 'PageView');
         You have seen <span id="previewCountText">2</span> pages free. Unlock all <span id="totalCountText">15</span>
         and download the whole book as a print-ready PDF.
       </p>
+      <div class="print-choice" id="printChoice" hidden>
+        <label class="print-opt">
+          <input type="radio" name="bookProduct" value="print" checked>
+          <span class="opt-text"><strong>Digital + printed copy</strong><span class="print-badge">Printed copy free</span>
+            <small>The PDF now, plus a printed book mailed to you. Just pay <span id="shipText">$4.99</span> shipping.</small></span>
+          <span class="opt-price" id="optPrintPrice">$19.99</span>
+        </label>
+        <label class="print-opt">
+          <input type="radio" name="bookProduct" value="digital">
+          <span class="opt-text"><strong>Digital only</strong><small>The PDF to print at home.</small></span>
+          <span class="opt-price" id="optDigitalPrice">$15</span>
+        </label>
+        <p class="paywall-note" style="margin-top:2px;">Printed copies ship to US addresses. Delivery usually takes 12&ndash;14 business days.</p>
+      </div>
       <button type="button" class="submit-btn unlock-btn" id="unlockBtn">Unlock now &mdash; <span id="priceText">$15</span></button>
       <div class="error-text" id="payError">Could not start checkout.</div>
       <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
@@ -1289,6 +1316,15 @@ let people = [];                // { file, dataUrl } - one photo per person, in 
 // that can drift. A failure here is not worth blocking an order over.
 let priceCents = 1500;
 let familyPriceCents = 1500;
+// Printed copies: off until the backend says they are on.
+let printEnabled = false;
+let printShippingCents = 499;
+function money(cents) { return '$' + (cents % 100 === 0 ? cents / 100 : (cents / 100).toFixed(2)); }
+function chosenProduct() {
+  if (!printEnabled) return 'digital';
+  const picked = document.querySelector('input[name="bookProduct"]:checked');
+  return picked && picked.value === 'print' ? 'print' : 'digital';
+}
 
 // What the paywall says has to be what Stripe charges. Both numbers come from
 // the backend rather than being written into this page twice, because a family
@@ -1298,8 +1334,16 @@ function showPrice() {
   const el = document.getElementById('priceText');
   if (!el) return;
   const cents = bookMode === 'family' ? familyPriceCents : priceCents;
-  el.textContent = '$' + (cents % 100 === 0 ? cents / 100 : (cents / 100).toFixed(2));
+  const choice = document.getElementById('printChoice');
+  if (choice) {
+    choice.hidden = !printEnabled;
+    document.getElementById('optDigitalPrice').textContent = money(cents);
+    document.getElementById('optPrintPrice').textContent = money(cents + printShippingCents);
+    document.getElementById('shipText').textContent = money(printShippingCents);
+  }
+  el.textContent = money(chosenProduct() === 'print' ? cents + printShippingCents : cents);
 }
+document.querySelectorAll('input[name="bookProduct"]').forEach((r) => r.addEventListener('change', showPrice));
 
 fetch(BACKEND_URL + '/options')
   .then((r) => (r.ok ? r.json() : null))
@@ -1307,6 +1351,10 @@ fetch(BACKEND_URL + '/options')
     if (!opts) return;
     if (opts.priceCents) priceCents = opts.priceCents;
     if (opts.family && opts.family.priceCents) familyPriceCents = opts.family.priceCents;
+    if (opts.print) {
+      printEnabled = opts.print.enabled === true;
+      if (opts.print.shippingCents) printShippingCents = opts.print.shippingCents;
+    }
     if (opts.family && opts.family.maxPeople) {
       maxPeople = opts.family.maxPeople;
       renderPeople();
@@ -1906,7 +1954,7 @@ unlockBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderId: orderId, token: accessToken, product: 'digital', code: creatorCode(),
+        orderId: orderId, token: accessToken, product: chosenProduct(), code: creatorCode(),
         childName: childName, email: email
       })
     });
