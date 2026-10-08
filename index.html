@@ -569,6 +569,13 @@ fbq('track', 'PageView');
     .scatter-stage .ss-scatter { display: none; }
     .scatter-stage .page { margin-bottom: 0; }
   }
+  .free-banner { display:block; margin:0 0 18px; padding:14px 18px; border-radius:14px;
+    background:#E85D4A; color:#fff; text-decoration:none; font-size:16px; line-height:1.4;
+    text-align:center; box-shadow:0 4px 14px rgba(232,93,74,.25); }
+  .free-banner[hidden] { display:none; }
+  .free-banner b { font-weight:800; }
+  .free-banner-go { display:inline-block; margin-left:8px; font-weight:800; white-space:nowrap; }
+  .free-banner:hover { background:#d14f3d; }
 </style>
 
 <script type="application/ld+json">
@@ -641,6 +648,14 @@ fbq('track', 'PageView');
 </head>
 <body>
 <div class="wrap">
+
+  <!-- Free-book banner, shown only to people who arrive from a Meta ad
+       (Facebook/Instagram add ?fbclid= to every ad click) and only while
+       free books are left. Everyone else sees the page exactly as before. -->
+  <a id="freeBanner" class="free-banner" href="free.html?from=meta-ad" hidden>
+    <b>Free for you:</b> get your child's coloring book on us &mdash; one per family, while they last.
+    <span class="free-banner-go">Claim it &rarr;</span>
+  </a>
 
   <header>
     <div class="brand">
@@ -1003,6 +1018,26 @@ function creatorCode() {
 }
 
 rememberCreatorCode();
+
+// --- Free-book banner for Meta ad visitors --------------------------------
+// Meta could not be made to send ads to free.html (it demanded a WhatsApp
+// number), so the ads still land here. Facebook and Instagram add ?fbclid= to
+// every ad click; that, a utm_source naming them, or a referrer from their
+// domains shows the banner. ?free=1 shows it for testing.
+(function () {
+  try {
+    const q = new URLSearchParams(location.search);
+    let ref = '';
+    try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) {}
+    const fromMeta = q.has('fbclid') || q.get('free') === '1'
+      || /^(facebook|fb|instagram|ig|meta)$/i.test(q.get('utm_source') || '')
+      || /(^|\.)(facebook\.com|instagram\.com|fb\.com)$/i.test(ref);
+    if (!fromMeta) return;
+    fetch(BACKEND_URL + '/giveaway/status').then((r) => r.json()).then((st) => {
+      if (st && st.open) document.getElementById('freeBanner').hidden = false;
+    }).catch(() => {});
+  } catch (err) { /* never let the banner break the page */ }
+})();
 
 // --- Funnel counters -------------------------------------------------------
 // How many people land, how many upload, how many pay. Deliberately anonymous:
