@@ -1754,8 +1754,8 @@ async function generateRange(from, to, file, opts) {
 
   generateStatus.style.display = 'block';
   generateStatus.textContent = (to - from) > 1
-    ? 'Drawing your first ' + (to - from) + ' pages - this takes about a minute...'
-    : 'Drawing page ' + (from + 1) + ' - this takes about a minute...';
+    ? 'Drawing your first ' + (to - from) + ' pages - this takes about 20 seconds...'
+    : 'Drawing page ' + (from + 1) + ' - this takes about 20 seconds...';
 
   const wanted = [];
   for (let i = from; i < to; i++) wanted.push(i);
