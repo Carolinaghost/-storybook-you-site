@@ -1320,6 +1320,17 @@ let familyPriceCents = 1500;
 let printEnabled = false;
 let printShippingCents = 499;
 function money(cents) { return '$' + (cents % 100 === 0 ? cents / 100 : (cents / 100).toFixed(2)); }
+function freeCodeVisit() {
+  try {
+    if (new URLSearchParams(location.search).get('free') === '1') {
+      sessionStorage.setItem('crayonautsFreeVisit', '1');
+      return true;
+    }
+    return sessionStorage.getItem('crayonautsFreeVisit') === '1';
+  } catch (e) {
+    return new URLSearchParams(location.search).get('free') === '1';
+  }
+}
 function chosenProduct() {
   if (!printEnabled) return 'digital';
   const picked = document.querySelector('input[name="bookProduct"]:checked');
@@ -1352,7 +1363,10 @@ fetch(BACKEND_URL + '/options')
     if (opts.priceCents) priceCents = opts.priceCents;
     if (opts.family && opts.family.priceCents) familyPriceCents = opts.family.priceCents;
     if (opts.print) {
-      printEnabled = opts.print.enabled === true;
+      // Visitors sent here with a free-book code (?free=1, from free.html and the
+      // code email) get the digital book only: the code takes the book to $0
+      // but cannot cover the printed copy's shipping.
+      printEnabled = opts.print.enabled === true && !freeCodeVisit();
       if (opts.print.shippingCents) printShippingCents = opts.print.shippingCents;
     }
     if (opts.family && opts.family.maxPeople) {
