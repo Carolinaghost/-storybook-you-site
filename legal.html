@@ -107,6 +107,8 @@
       <li>The photo you upload.</li>
       <li>The child's first name, so it can appear on the cover.</li>
       <li>Your email address, so we can send you the finished book.</li>
+      <li>If you order a printed copy: your name, shipping address and phone number, collected by Stripe at checkout so our printer can mail the book.</li>
+      <li>Your mobile number, only if you give it to us and agree to receive text messages. See &ldquo;Text messages&rdquo; below.</li>
       <li>Your choices: the art style, how many children are in the photo, and any notes you add.</li>
       <li>Your IP address, kept for about a week, only to stop one person using up all the free previews or flooding the creator sign-up form. It is stored as a count against the address and nothing else &mdash; never linked to your order, your email or your photo.</li>
       <li>Anonymous counts of what happened here &mdash; a page opened, a photo uploaded, a payment made &mdash; so we can see where people get stuck. Explained below.</li>
@@ -118,6 +120,8 @@
 
     <h3>How long we keep anything</h3>
     <p><strong>Your download link works for 30 days.</strong> After that we delete the drawings, your email address, the child's name and your notes. Download your PDF and save it somewhere safe &mdash; once the 30 days are up we cannot get it back for you.</p>
+    <p>A printed copy&rsquo;s shipping details are deleted at the same 30-day mark.</p>
+    <p>If you opted in to texts, we keep your number and your choices until you reply STOP or ask us to remove them. After that we keep only a note that the number opted out, so it is never texted again.</p>
     <p>What survives is a plain sales record: an order number, the date, the amount and the Stripe reference, so our books balance. There is no name, no email and no picture attached to it.</p>
     <p>We do not keep your card details. Payments are handled by Stripe, and card numbers never reach our server.</p>
 
@@ -130,6 +134,10 @@
     <p>We also pay creators who share Crayonauts with their followers. To know who sent you, this site loads Trybe's script. It sets a cookie and tells Trybe which pages you opened, which creator's link you arrived through, and, if you buy, the order number and amount, so the right creator gets their share.</p>
     <p><strong>Your photos are never shared. Neither is your child's name, your email address or your book.</strong> Marketing data means pages and clicks, nothing from your order.</p>
 
+    <h3 id="sms-privacy">Text messages</h3>
+    <p>If you opt in to texts, we use your mobile number to send you messages from Crayonauts about your order and, if you agree to them, occasional offers. We use it for nothing else.</p>
+    <p><strong>No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong> Your text messaging opt-in and consent are never shared with or sold to anyone. The only exception is the text messaging provider that delivers our texts for us, which receives your number solely to send them. You can stop texts at any time by replying STOP.</p>
+
     <h3>What your browser keeps</h3>
     <p>When you start an order, your browser saves your order number and the private key that goes with it. That is what lets the payment page send you back here, and what proves the book is yours when you come back to download it. Apart from the advertising and creator cookies above, it is the only thing this site stores on your device, it never leaves your browser, and clearing your site data removes it &mdash; along with your ability to re-download that book from that device.</p>
 
@@ -137,24 +145,26 @@
     <p>We use a small number of outside services to run this, and only what each one needs is shared with it:</p>
     <ul>
       <li><strong>OpenAI</strong> — generates the artwork from your photo.</li>
-      <li><strong>Stripe</strong> — processes payment.</li>
+      <li><strong>Stripe</strong> — processes payment and collects the shipping address for printed copies.</li>
+      <li><strong>Lulu</strong> — prints and mails printed copies, using the name, address and phone number needed for delivery.</li>
       <li><strong>Trybe</strong> — credits creators for the sales their links bring in.</li>
       <li><strong>Render</strong> and <strong>Neon</strong> — host the service and store orders.</li>
       <li><strong>Resend</strong> — sends your emails.</li>
+      <li><strong>Our text messaging provider</strong> — sends texts, only if you opt in to them.</li>
     </ul>
 
     <h3>Children</h3>
     <p>This service is sold to adults. You must be 18 or older to place an order. Children do not create accounts here and we do not knowingly collect information directly from a child. The photo is uploaded by an adult who has the right to share it.</p>
 
     <h3>What we do not do</h3>
-    <p>We do not sell your information, we do not run ads, and we do not send marketing email you did not ask for.</p>
+    <p>We do not sell your information, we do not show ads on this site, and we do not send marketing email or texts you did not ask for.</p>
   </section>
 
   <section id="terms">
     <h2>Terms</h2>
 
     <h3>What you are buying</h3>
-    <p>A personalized digital coloring book: 15 pages plus a cover, delivered as a PDF you download. It is not a physical product and nothing is shipped.</p>
+    <p>A personalized coloring book: 15 pages plus a cover, delivered as a PDF you download. If you choose the printed copy, we also mail a printed book to a US address; you pay the shipping shown at checkout, and delivery usually takes 12&ndash;14 business days.</p>
 
     <h3>Your photo</h3>
     <p>By uploading a photo you confirm that you are 18 or older, that the photo is yours to use, and that everyone in it has agreed to appear &mdash; and for any child in the photo, that you are their parent or guardian or have that parent or guardian&rsquo;s permission. Do not upload a photo of someone who has not agreed to it.</p>
@@ -168,6 +178,17 @@
 
     <h3>Things we can do</h3>
     <p>We may decline or cancel an order and refund it — for example if a photo breaks these terms, or if we cannot produce a usable book from it.</p>
+
+    <h3 id="sms-terms">Text messages</h3>
+    <p>You can sign up for texts at <a href="sms.html">crayonauts.com/sms.html</a> or when you order. By giving us your mobile number and ticking a box to opt in, you agree to receive text messages from Crayonauts. These can be order updates, such as your book being ready or your printed copy shipping, and, if you opt in to them, promotional messages, such as offers and new themes.</p>
+    <ul>
+      <li>Agreeing to texts is not a condition of buying anything.</li>
+      <li>Message frequency varies. Message and data rates may apply.</li>
+      <li>Reply <strong>STOP</strong> at any time to stop texts. We will send one text confirming you are unsubscribed, and nothing after that.</li>
+      <li>Reply <strong>HELP</strong> for help, or email <a href="mailto:support@crayonauts.com">support@crayonauts.com</a>.</li>
+      <li>Mobile carriers are not liable for delayed or undelivered messages.</li>
+      <li>How we handle your number is covered under &ldquo;Text messages&rdquo; in the Privacy section above.</li>
+    </ul>
 
     <h3>Limits</h3>
     <p>We do our best to keep the service running and your book available, but we provide it as-is. Our responsibility to you is limited to refunding what you paid.</p>
