@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text updates from Crayonauts</title>
+<meta name="description" content="Sign up for text messages from Crayonauts: order updates and, if you choose, offers and new themes. Reply STOP any time.">
+<link rel="canonical" href="https://crayonauts.com/sms.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Crayonauts">
+<meta property="og:title" content="Text updates from Crayonauts">
+<meta property="og:description" content="Order updates and offers from Crayonauts by text. Reply STOP any time.">
+<meta property="og:url" content="https://crayonauts.com/sms.html">
+<meta property="og:image" content="https://crayonauts.com/og-image_1.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Text updates from Crayonauts">
+<meta name="twitter:description" content="Order updates and offers from Crayonauts by text. Reply STOP any time.">
+<meta name="twitter:image" content="https://crayonauts.com/og-image_1.png">
+
+<link rel="icon" href="/favicon-32_1.png" sizes="32x32">
+<link rel="icon" href="/favicon-16_1.png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon_1.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF6EA;
+    --card: #FFFFFF;
+    --ink: #2A2724;
+    --ink-soft: #6B6357;
+    --blue: #2F5FA8;
+    --blue-dark: #1F4479;
+    --orange: #E8622C;
+    --green: #4C8C5B;
+    --line: #DCD2B8;
+    --danger: #C1432B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1, h2, h3 { font-family: 'Baloo 2', sans-serif; margin: 0; }
+  header { text-align: center; margin-bottom: 28px; }
+  .brand { font-size: 34px; color: var(--blue-dark); }
+  .brand a { color: inherit; text-decoration: none; }
+
+  .hero { text-align: center; margin-bottom: 26px; }
+  .hero h1 { font-size: 34px; color: var(--blue-dark); line-height: 1.2; }
+  .hero p { color: var(--ink-soft); margin: 10px 0 0; }
+
+  .terms {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 24px;
+  }
+  .term {
+    background: var(--card); border: 2px dashed var(--line); border-radius: 16px;
+    padding: 16px 12px; text-align: center;
+  }
+  .term b { display: block; font-family: 'Baloo 2', sans-serif; font-size: 26px; color: var(--orange); }
+  .term span { font-size: 13px; color: var(--ink-soft); }
+  @media (max-width: 520px) { .terms { grid-template-columns: 1fr; } .term { text-align: left; display: flex; align-items: baseline; gap: 10px; } }
+
+  section {
+    background: var(--card); border: 2px dashed var(--line);
+    border-radius: 18px; padding: 26px; margin-bottom: 22px;
+  }
+  section h2 { font-size: 24px; color: var(--blue-dark); margin-bottom: 8px; }
+  p { margin: 10px 0; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 6px 0; }
+  a { color: var(--blue); }
+
+  label.field { display: block; margin-bottom: 16px; }
+  label.field > span {
+    display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px;
+    font-family: 'Baloo 2', sans-serif;
+  }
+  input {
+    width: 100%; padding: 12px 14px; font-size: 16px; font-family: 'Karla', sans-serif;
+    border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+  }
+  input:focus { outline: none; border-color: var(--blue); }
+  .hint { font-size: 13px; color: var(--ink-soft); margin: -10px 0 16px; }
+  .error-text { display: none; color: var(--danger); font-size: 14px; margin-top: 4px; font-weight: 700; }
+  .error-text.show { display: block; }
+
+  button.go {
+    width: 100%; padding: 15px 22px; font-size: 18px; font-weight: 700;
+    font-family: 'Baloo 2', sans-serif; color: #fff; background: var(--orange);
+    border: none; border-radius: 12px; cursor: pointer;
+  }
+  button.go:hover { background: #cf5324; }
+  button.go[disabled] { background: var(--ink-soft); cursor: default; }
+
+  /* The success panel. Deliberately loud: the code is the whole reason they
+     came, and it is also the one thing the email might fail to deliver. */
+  #done { display: none; }
+  .codebox {
+    background: #F6F4EF; border-radius: 12px; padding: 18px; margin: 18px 0; text-align: center;
+  }
+  .codebox .label { font-size: 13px; color: var(--ink-soft); }
+  .codebox .code {
+    font-family: 'Baloo 2', sans-serif; font-size: 32px; font-weight: 800;
+    letter-spacing: 2px; color: var(--blue-dark); word-break: break-all;
+  }
+  .codebox .link { font-size: 15px; word-break: break-all; }
+
+  .site-footer {
+    text-align: center; margin-top: 30px; font-size: 14px; color: var(--ink-soft);
+  }
+  .site-footer a { margin: 0 8px; }
+  .site-footer .entity { display: block; margin-top: 8px; font-size: 12px; }
+
+  .check { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; cursor: pointer; }
+  .check input { width: 22px; height: 22px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--blue); }
+  .check span { font-size: 15px; }
+  .disclosure { font-size: 13px; color: var(--ink-soft); background: #F6F4EF; border-radius: 10px; padding: 12px 14px; margin: 6px 0 16px; }
+  #done { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand"><a href="/">Crayonauts</a></div>
+  </header>
+
+  <div class="hero">
+    <h1>Text updates from Crayonauts</h1>
+    <p>Get a text when your book is ready or your printed copy ships &mdash; and, if you like, the occasional offer or new theme. Reply STOP any time.</p>
+  </div>
+
+  <section id="form">
+    <h2>Sign up for texts</h2>
+    <label class="field">
+      <span>Mobile number <span style="font-weight:400;color:var(--ink-soft);">(US only)</span></span>
+      <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567">
+      <div class="error-text" id="phoneError">Enter a US mobile number, like (555) 123-4567.</div>
+    </label>
+
+    <label class="check">
+      <input type="checkbox" id="optUpdates">
+      <span><strong>Order updates</strong> &mdash; texts about my order, like my book being ready or my printed copy shipping.</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="optPromos">
+      <span><strong>Offers and new themes</strong> &mdash; occasional promotional texts from Crayonauts.</span>
+    </label>
+    <div class="error-text" id="boxError">Tick at least one box to choose which texts you want.</div>
+
+    <p class="disclosure" id="disclosure">By ticking a box and pressing <strong>Sign me up</strong>, you agree to receive the texts you chose from Crayonauts at the number above. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to opt out at any time, or <strong>HELP</strong> for help. See our <a href="legal.html#sms-terms">Text Message Terms</a> and <a href="legal.html#sms-privacy">Privacy Policy</a>. We never sell or share your number for marketing.</p>
+
+    <button class="go" id="goBtn" type="button">Sign me up</button>
+    <div class="error-text" id="formError"></div>
+  </section>
+
+  <section id="done">
+    <h2>You&rsquo;re signed up</h2>
+    <p id="doneText">Thanks! We&rsquo;ll only text you about the things you chose.</p>
+    <p>Changed your mind? Reply <strong>STOP</strong> to any of our texts, or email <a href="mailto:support@crayonauts.com">support@crayonauts.com</a>.</p>
+    <button class="go" type="button" onclick="location.href='/'">Make a coloring book</button>
+  </section>
+
+  <section>
+    <h2>The details</h2>
+    <ul>
+      <li><strong>Who texts you:</strong> Crayonauts, a service of Justice United Inc.</li>
+      <li><strong>What we send:</strong> order updates, and offers or new themes only if you tick that box.</li>
+      <li><strong>How often:</strong> it varies &mdash; order updates come only when something happens with your order.</li>
+      <li><strong>Cost:</strong> message and data rates from your mobile carrier may apply.</li>
+      <li><strong>Stop or get help:</strong> reply STOP to stop all texts, HELP for help, or email <a href="mailto:support@crayonauts.com">support@crayonauts.com</a>.</li>
+      <li><strong>Your number:</strong> never sold or shared with anyone for their marketing. Full details in our <a href="legal.html#sms-privacy">Privacy Policy</a> and <a href="legal.html#sms-terms">Text Message Terms</a>.</li>
+    </ul>
+  </section>
+
+  <footer class="site-footer">
+    <a href="/">Home</a>
+    <a href="legal.html#privacy">Privacy</a>
+    <a href="legal.html#terms">Terms</a>
+    <a href="mailto:support@crayonauts.com">Contact</a>
+    <span class="entity">Crayonauts is a service of Justice United Inc</span>
+  </footer>
+
+</div>
+
+<script>
+const BACKEND_URL = 'https://api.crayonauts.com';
+const $ = (id) => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const source = ('sms-page' + (params.get('from') ? ':' + params.get('from') : '')).slice(0, 40);
+
+function usPhone(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.length === 11 && d[0] === '1') d = d.slice(1);
+  return d.length === 10 && d[0] >= '2' && d[3] >= '2' ? d : '';
+}
+
+$('goBtn').addEventListener('click', async () => {
+  const phone = $('phone').value;
+  const orderUpdates = $('optUpdates').checked;
+  const promos = $('optPromos').checked;
+  $('phoneError').classList.toggle('show', !usPhone(phone));
+  $('boxError').classList.toggle('show', !orderUpdates && !promos);
+  $('formError').classList.remove('show');
+  if (!usPhone(phone) || (!orderUpdates && !promos)) return;
+  const btn = $('goBtn');
+  btn.disabled = true; btn.textContent = 'Signing you up...';
+  try {
+    const resp = await fetch(BACKEND_URL + '/sms/optin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, orderUpdates, promos, source })
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok || !body.ok) throw new Error(body.error || 'Could not sign you up just now. Try again in a minute.');
+    const kinds = [orderUpdates ? 'order updates' : '', promos ? 'offers and new themes' : ''].filter(Boolean).join(' and ');
+    $('doneText').textContent = 'Thanks! We\u2019ll only text you ' + kinds + '.';
+    $('form').style.display = 'none';
+    $('done').style.display = 'block';
+    $('done').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    $('formError').textContent = err.message;
+    $('formError').classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign me up';
+  }
+});
+</script>
+</body>
+</html>

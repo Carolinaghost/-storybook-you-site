@@ -270,7 +270,7 @@ fbq('track', 'PageView');
 
   label.field { display: block; margin-bottom: 16px; }
   label.field span { display: block; font-weight: 700; font-size: 14px; margin-bottom: 6px; font-family: 'Baloo 2', sans-serif; }
-  input[type=text], input[type=email], textarea {
+  input[type=text], input[type=email], input[type=tel], textarea {
     width: 100%;
     padding: 11px 13px;
     border: 2px solid var(--line);
@@ -466,6 +466,14 @@ fbq('track', 'PageView');
   .unlock-btn { width: auto; margin-top: 4px; border-radius: 999px; padding: 12px 30px; }
   .paywall-seen { margin: 0 0 12px; font-size: 14px; color: var(--ink-soft); }
   .paywall-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+  /* Optional text-message opt-in under the email. Unticked by default; the
+     phone box only appears once they ask for texts. */
+  .sms-optin { margin: -4px 0 16px; text-align: left; }
+  .sms-check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; margin: 0 0 8px; }
+  .sms-check input { accent-color: var(--orange); width: 18px; height: 18px; flex: none; margin: 2px 0 0; }
+  .sms-fields[hidden] { display: none; }
+  .sms-fields input[type=tel] { margin-bottom: 8px; }
+  .sms-note { margin: 4px 0 0; font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
   /* Digital, or digital plus a printed copy. Only shown once the backend says
      printed copies are on. */
   .print-choice { display: grid; gap: 8px; margin: 0 0 14px; text-align: left; }
@@ -937,6 +945,15 @@ fbq('track', 'PageView');
       <input type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
       <div class="error-text" id="emailError">Enter a valid email.</div>
     </label>
+    <div class="sms-optin">
+      <label class="sms-check"><input type="checkbox" id="smsOpt"><span>Text me updates about my order <span style="color:var(--ink-soft);">(optional)</span></span></label>
+      <div class="sms-fields" id="smsFields" hidden>
+        <input type="tel" id="smsPhone" placeholder="Mobile number (US)" autocomplete="tel" inputmode="tel">
+        <div class="error-text" id="smsPhoneError">Enter a US mobile number, like (555) 123-4567.</div>
+        <label class="sms-check"><input type="checkbox" id="smsPromos"><span>Also text me offers and new themes</span></label>
+        <p class="sms-note">By ticking, you agree to receive the texts you chose from Crayonauts at this number. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. <a href="legal.html#sms-terms" target="_blank">Text Message Terms</a> &middot; <a href="legal.html#sms-privacy" target="_blank">Privacy</a></p>
+      </div>
+    </div>
 
     <!-- Unlock. Always here, so someone who has seen enough (or has used up
          the free drawings for today) can buy straight away. The name and email
@@ -995,6 +1012,7 @@ fbq('track', 'PageView');
     <a href="legal.html#privacy">Privacy</a>
     <a href="legal.html#terms">Terms</a>
     <a href="legal.html#refunds">Refunds</a>
+    <a href="sms.html">Text updates</a>
     <a href="mailto:support@crayonauts.com">Contact</a>
     <span class="entity">Crayonauts is a service of Justice United Inc</span>
   </footer>
@@ -1925,6 +1943,30 @@ previewBtn.addEventListener('click', async () => {
   previewBtn.disabled = false;
 });
 
+// Optional texts: ticking the box shows the phone field. The opt-in is sent on
+// its own when they press Unlock; it never holds up or breaks checkout.
+const smsOpt = document.getElementById('smsOpt');
+smsOpt.addEventListener('change', () => {
+  document.getElementById('smsFields').hidden = !smsOpt.checked;
+  if (!smsOpt.checked) document.getElementById('smsPhoneError').style.display = 'none';
+});
+function smsUsPhone(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.length === 11 && d[0] === '1') d = d.slice(1);
+  return d.length === 10 && d[0] >= '2' && d[3] >= '2' ? d : '';
+}
+function sendSmsOptin() {
+  if (!smsOpt.checked) return;
+  const phone = document.getElementById('smsPhone').value;
+  try {
+    fetch(BACKEND_URL + '/sms/optin', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, orderUpdates: true, promos: document.getElementById('smsPromos').checked, source: 'order' })
+    }).catch(() => {});
+  } catch (e) { /* never block checkout */ }
+}
+
 // Step 2 button: the name and email are asked for here, then off to Stripe.
 const unlockLabel = unlockBtn.innerHTML;
 unlockBtn.addEventListener('click', async () => {
@@ -1951,9 +1993,14 @@ unlockBtn.addEventListener('click', async () => {
     document.getElementById('childNameError').style.display = 'block'; ok = false;
   }
   if (!isValidEmail(email)) { document.getElementById('emailError').style.display = 'block'; ok = false; }
+  document.getElementById('smsPhoneError').style.display = 'none';
+  if (smsOpt.checked && !smsUsPhone(document.getElementById('smsPhone').value)) {
+    document.getElementById('smsPhoneError').style.display = 'block'; ok = false;
+  }
   if (!ok) return;
 
   track('unlock_clicked');
+  sendSmsOptin();
   unlockBtn.disabled = true;
   unlockBtn.textContent = 'Taking you to checkout...';
   try {
