@@ -679,6 +679,12 @@ fbq('track', 'PageView');
 }
 </script>
 <script src="holiday-bar.js"></script>
+<!-- Microsoft Clarity: anonymous recordings of clicks and scrolling, so we can
+     see where visitors get stuck. The photo, the drawn pages, names and emails
+     are masked (data-clarity-mask), so they never leave the browser. -->
+<script type="text/javascript">
+(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","z3xwnfh970");
+</script>
 <!-- Trybe Attribution Pixel (Custom Domain) -->
 <script>
 (function(w,d,p,s,u,pl,at) {
@@ -916,7 +922,7 @@ fbq('track', 'PageView');
          photos anywhere on the box) and the + comes back for the next one,
          up to the most the backend will draw. No names - the photos go in
          order and the first is who the book is about. -->
-    <div id="familyPanel" style="display:none; margin-top:20px;">
+    <div id="familyPanel" data-clarity-mask="True" style="display:none; margin-top:20px;">
       <div class="dropzone family-drop" id="familyDrop">
         <div class="family-row">
           <div id="peopleRows"></div>
@@ -940,7 +946,7 @@ fbq('track', 'PageView');
           <p>Drop a photo here, or tap to choose one</p>
           <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
         </div>
-        <div class="previews" id="previews" style="display:none;">
+        <div class="previews" id="previews" data-clarity-mask="True" style="display:none;">
           <img id="origPreview" alt="Your photo">
           <div class="dz-meta">
             <p>Your photo</p>
@@ -959,9 +965,9 @@ fbq('track', 'PageView');
       <button type="button" class="submit-btn" id="stopBtn" style="margin-top:0; display:none; background:#fff; color:var(--danger); border:2px solid var(--danger);">Stop</button>
     </div>
     <div class="error-text" id="generateError">Upload a photo first.</div>
-    <div id="generateStatus" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
+    <div id="generateStatus" data-clarity-mask="True" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
 
-    <div id="storyGrid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+    <div id="storyGrid" data-clarity-mask="True" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
   </div>
 
   <div class="step-arrow" aria-hidden="true">&darr;</div>
@@ -972,18 +978,18 @@ fbq('track', 'PageView');
 
     <label class="field">
       <span class="sr-only" id="childNameLabel">Child's name</span>
-      <input type="text" id="childName" placeholder="Who's the star? Their name, e.g. Ava" autocomplete="off">
+      <input data-clarity-mask="True" type="text" id="childName" placeholder="Who's the star? Their name, e.g. Ava" autocomplete="off">
       <div class="error-text" id="childNameError">Enter who the book is for.</div>
     </label>
     <label class="field">
       <span class="sr-only">Your email</span>
-      <input type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
+      <input data-clarity-mask="True" type="email" id="parentEmail" placeholder="Your email" autocomplete="email">
       <div class="error-text" id="emailError">Enter a valid email.</div>
     </label>
     <div class="sms-optin">
       <label class="sms-check"><input type="checkbox" id="smsOpt"><span>Text me updates about my order <span style="color:var(--ink-soft);">(optional)</span></span></label>
       <div class="sms-fields" id="smsFields" hidden>
-        <input type="tel" id="smsPhone" placeholder="Mobile number (US)" autocomplete="tel" inputmode="tel">
+        <input data-clarity-mask="True" type="tel" id="smsPhone" placeholder="Mobile number (US)" autocomplete="tel" inputmode="tel">
         <div class="error-text" id="smsPhoneError">Enter a US mobile number, like (555) 123-4567.</div>
         <label class="sms-check"><input type="checkbox" id="smsPromos"><span>Also text me offers and new themes</span></label>
         <p class="sms-note">By ticking, you agree to receive the texts you chose from Crayonauts at this number. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. <a href="legal.html#sms-terms" target="_blank">Text Message Terms</a> &middot; <a href="legal.html#sms-privacy" target="_blank">Privacy</a></p>
@@ -1030,7 +1036,7 @@ fbq('track', 'PageView');
       <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
     </div>
 
-    <div class="confirm" id="confirm">
+    <div class="confirm" id="confirm" data-clarity-mask="True">
       <h3 id="confirmTitle">Order started</h3>
       <p id="confirmText"></p>
       <p id="leaveNote" class="leave-note" style="display:none;"></p>
