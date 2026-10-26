@@ -603,6 +603,7 @@ fbq('track', 'PageView');
   .free-banner b { font-weight:800; }
   .free-banner-go { display:inline-block; margin-left:8px; font-weight:800; white-space:nowrap; }
   .free-banner:hover { background:#d14f3d; }
+  #themes.need-pick { outline: 2px dashed var(--danger); outline-offset: 6px; border-radius: 14px; }
   .xmas-cutoff { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--brand-coral); }
   .xmas-cutoff[hidden], .review-ask[hidden], .sticky-cta[hidden] { display: none; }
   .review-ask { margin: 14px 0 0; font-size: 14px; color: var(--ink-soft); }
@@ -848,7 +849,7 @@ fbq('track', 'PageView');
              26 Sep left the default (Portrait); with pills they picked
              Fairy tale, Adventure, Superhero, Doctor. Smaller so they fit
              beside the Personal/Family toggle. -->
-        <button type="button" class="theme-pill active" data-theme="Portrait" data-audience="both">Simple portrait</button>
+        <button type="button" class="theme-pill" data-theme="Portrait" data-audience="both">Simple portrait</button>
         <button type="button" class="theme-pill" data-theme="Adventure scene" data-audience="kid">Adventure scene</button>
         <button type="button" class="theme-pill" data-theme="Superhero" data-audience="kid">Superhero</button>
         <button type="button" class="theme-pill" data-theme="Fairy tale" data-audience="kid">Fairy tale</button>
@@ -875,6 +876,10 @@ fbq('track', 'PageView');
       </div>
     </div>
     <p class="step-desc intake-note" id="themeStepDesc" hidden>The style decides how the pages are drawn.</p>
+    <!-- No style is pre-picked: most visitors left whatever was selected, so a
+         default quietly decided the whole book for them (a "Simple portrait"
+         keeps the photo's pose on every page). Now they choose. -->
+    <div class="error-text" id="themeError">Pick a style for the book first.</div>
 
     <!-- Not "how old is the child in the photo". The drawing always looks like
          whoever is in the photo; this only decides how much is in the picture,
@@ -1387,7 +1392,7 @@ function resetBook() {
   resumedOrder = false;
 }
 
-let selectedTheme = 'Portrait';
+let selectedTheme = '';
 const careerPill = document.getElementById('careerPill');
 const careerSelect = document.getElementById('careerSelect');
 const holidayPill = document.getElementById('holidayPill');
@@ -1396,6 +1401,8 @@ const holidaySelect = document.getElementById('holidaySelect');
 function activatePill(el) {
   document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('themeError').style.display = 'none';
+  document.getElementById('themes').classList.remove('need-pick');
 }
 
 document.querySelectorAll('#themes .theme-pill').forEach(btn => {
@@ -1719,11 +1726,11 @@ document.querySelectorAll('#audiencePicker .theme-pill').forEach(btn => {
       pill.style.display = matches ? (pill.classList.contains('career-pill') ? 'inline-flex' : 'inline-block') : 'none';
     });
     const activeThemePill = document.querySelector('#themes .theme-pill.active');
-    if (!activeThemePill || activeThemePill.style.display === 'none') {
+    if (activeThemePill && activeThemePill.style.display === 'none') {
+      // The style they had picked is not offered for this person: ask again
+      // rather than quietly swapping in another one.
       document.querySelectorAll('#themes .theme-pill').forEach(b => b.classList.remove('active'));
-      const portraitPill = document.querySelector('#themes .theme-pill[data-theme="Portrait"]');
-      portraitPill.classList.add('active');
-      selectedTheme = 'Portrait';
+      selectedTheme = '';
     }
   });
 });
@@ -1984,6 +1991,14 @@ function currentBookKey() {
 function readyToDraw(errorEl) {
   const peopleError = document.getElementById('peopleError');
   peopleError.style.display = 'none';
+  if (!selectedTheme) {
+    document.getElementById('themeError').style.display = 'block';
+    const themes = document.getElementById('themes');
+    themes.classList.add('need-pick');
+    themes.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (errorEl) { errorEl.textContent = 'Pick a style first.'; errorEl.style.display = 'block'; }
+    return null;
+  }
   const cast = bookMode === 'family' ? familyCast() : [];
   if (bookMode === 'family') {
     // Refused here rather than at the backend, so nobody waits on a request
