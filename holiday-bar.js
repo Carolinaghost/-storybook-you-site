@@ -1,4 +1,4 @@
-// Christmas bar across the top of the shop pages, 27 Oct - 24 Dec.
+// Christmas bar across the top of the shop pages, 20 Oct - 24 Dec.
 //
 // One file so the dates live in one place. Days are counted in US Eastern
 // time, the same clock the printed-copy cutoff is promised in. Until 4 December
@@ -22,7 +22,7 @@
   var lastDay = year + '-12-24';
   // Exposed so the order step can show its own cutoff line from the same date.
   window.CRAYONAUTS_PRINT_CUTOFF_OPEN = today <= printCutoff;
-  if (today > lastDay || today < year + '-10-27') return;
+  if (today > lastDay || today < year + '-10-20') return;
 
   var text = today <= printCutoff
     ? 'Christmas theme is here · Order printed copies by 4 December'
