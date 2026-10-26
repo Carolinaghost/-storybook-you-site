@@ -169,11 +169,11 @@
       <div class="code" id="outCode"></div>
     </div>
     <ul>
-      <li>Go to <a href="/?free=1">crayonauts.com</a> and upload a clear photo of your child facing the camera. You&rsquo;ll see 2 pages free.</li>
-      <li>Choose <strong>Digital only</strong> if asked, press <strong>Unlock</strong> and type your code at checkout. The price goes to $0.</li>
+      <li>Go to <a href="/?free=1" id="bookLink">crayonauts.com</a> and upload a clear photo of your child facing the camera. You&rsquo;ll see 2 pages free.</li>
+      <li>Choose <strong>Digital only</strong> if asked and press <strong>Unlock</strong>. Your code is already on the order when you use the button below, so the price goes to $0. (If you come back another way, tap <strong>Have a code?</strong> above Unlock, or type it at checkout.)</li>
       <li>Your book arrives as a PDF you can print as many times as you like.</li>
     </ul>
-    <button class="go" type="button" onclick="location.href='/?free=1'">Make my book now</button>
+    <button class="go" type="button" id="bookGo" onclick="location.href='/?free=1'">Make my book now</button>
     <p style="font-size:14px;color:var(--ink-soft);">Didn&rsquo;t get the email? Check spam, then write to <a href="mailto:support@crayonauts.com">support@crayonauts.com</a>.</p>
   </section>
 
@@ -233,6 +233,12 @@ $('goBtn').addEventListener('click', async () => {
     if (resp.status === 410 || body.closed) { showClosed(); return; }
     if (!resp.ok || !body.code) throw new Error(body.error || 'Could not make your code just now. Try again in a minute.');
     $('outCode').textContent = body.code;
+    // Put the code on the order itself. Without it, a visitor who first came
+    // through a creator or ad link has that code attached at checkout, and
+    // Stripe then shows no box to type this one in.
+    const bookUrl = '/?free=1&c=' + encodeURIComponent(body.code);
+    $('bookLink').href = bookUrl;
+    $('bookGo').onclick = function () { location.href = bookUrl; };
     $('doneLead').textContent = body.again
       ? 'You already claimed one - here it is again. We’ve re-sent it to your email too.'
       : 'We’ve emailed this to you as well.';
