@@ -21,8 +21,9 @@
   var printCutoff = year + '-12-04';
   var lastDay = year + '-12-24';
   // Exposed so the order step can show its own cutoff line from the same date.
-  window.CRAYONAUTS_PRINT_CUTOFF_OPEN = today <= printCutoff;
-  if (today > lastDay || today < year + '-10-20') return;
+  var seasonStart = year + '-10-20';
+  window.CRAYONAUTS_PRINT_CUTOFF_OPEN = today >= seasonStart && today <= printCutoff;
+  if (today > lastDay || today < seasonStart) return;
 
   var text = today <= printCutoff
     ? 'Christmas theme is here · Order printed copies by 4 December'
