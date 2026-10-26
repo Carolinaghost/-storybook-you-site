@@ -1487,10 +1487,18 @@ function showXmasCutoff() {
     if (!btn || !start || !('IntersectionObserver' in window)) return;
     const params = new URLSearchParams(location.search);
     if (params.get('order') || params.get('paid') || params.get('canceled')) return;
-    new IntersectionObserver((entries) => {
-      const e = entries[0];
-      btn.hidden = e.isIntersecting || e.boundingClientRect.top < 0;
-    }).observe(start);
+    // Watch the photo boxes themselves (single and family), not the top of
+    // the card: on a phone the card's heading can peek in at the bottom while
+    // the place to drop a photo is still a scroll away.
+    const seen = new Map();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        const r = e.boundingClientRect;
+        seen.set(e.target, e.isIntersecting || (r.height > 0 && r.top < 0));
+      });
+      btn.hidden = Array.from(seen.values()).some(Boolean);
+    });
+    ['uploadStep', 'familyPanel'].forEach((id) => { const el = document.getElementById(id); if (el) io.observe(el); });
     btn.addEventListener('click', (ev) => {
       ev.preventDefault();
       start.scrollIntoView({ behavior: 'smooth', block: 'start' });
