@@ -228,12 +228,18 @@ $('goBtn').addEventListener('click', async () => {
   $('emailError').classList.toggle('show', !looksLikeEmail(email));
   $('formError').classList.remove('show');
   if (!looksLikeEmail(email)) return;
+  // Meta's cookie ids, so the server can tell Meta this free claim came from
+  // an ad (sent as a Lead, never a Purchase). Nothing personal.
+  function fbDetails() {
+    const get = (n) => { const m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; };
+    return { fbp: get('_fbp'), fbc: get('_fbc'), url: location.href.split('#')[0].slice(0, 480) };
+  }
   const btn = $('goBtn');
   btn.disabled = true; btn.textContent = 'Making your code...';
   try {
     const resp = await fetch(BACKEND_URL + '/giveaway/claim', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name: $('name').value.trim(), source })
+      body: JSON.stringify({ email, name: $('name').value.trim(), source, fb: fbDetails() })
     });
     const body = await resp.json().catch(() => ({}));
     if (resp.status === 410 || body.closed) { showClosed(); return; }

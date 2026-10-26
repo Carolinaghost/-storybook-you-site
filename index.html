@@ -1209,15 +1209,41 @@ const trafficCampaign = (function () {
 // waits on this and every failure is swallowed on purpose.
 // Never let a blocked or slow pixel touch the funnel: no fbq, no error, no
 // difference to the page.
-function fbTrack(name, params) {
-  try { if (window.fbq) window.fbq('track', name, params || {}); } catch (err) { /* ignore */ }
+function fbTrack(name, params, eventId) {
+  try {
+    if (!window.fbq) return;
+    // eventId: the same id the server sends with its copy of this event
+    // (Conversions API), so Meta counts it once.
+    if (eventId) window.fbq('track', name, params || {}, { eventID: eventId });
+    else window.fbq('track', name, params || {});
+  } catch (err) { /* ignore */ }
+}
+
+// What the server needs to send its copy of an event to Meta: Meta's own
+// cookie ids (set by the Pixel), and this page's address. Nothing personal.
+function fbCookie(name) {
+  try {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  } catch (err) { return ''; }
+}
+function fbBrowserDetails(icId) {
+  let fbc = fbCookie('_fbc');
+  if (!fbc) {
+    try {
+      const clid = new URLSearchParams(location.search).get('fbclid');
+      if (clid) fbc = 'fb.1.' + Date.now() + '.' + clid;
+    } catch (err) { /* ignore */ }
+  }
+  return { fbp: fbCookie('_fbp'), fbc: fbc, url: location.href.split('#')[0].slice(0, 480), icId: icId || '' };
 }
 
 // The site's own counters already fire at exactly the moments worth reporting,
 // so the pixel rides along with them rather than being wired in separately.
 const PIXEL_EVENTS = {
-  preview_started: 'ViewContent',
-  unlock_clicked:  'InitiateCheckout'
+  preview_started: 'ViewContent'
+  // unlock_clicked -> InitiateCheckout is sent by the Unlock button itself,
+  // with an event id the server shares.
 };
 
 function track(type) {
@@ -2134,6 +2160,8 @@ unlockBtn.addEventListener('click', async () => {
   if (!ok) return;
 
   track('unlock_clicked');
+  const icId = 'ic-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+  fbTrack('InitiateCheckout', {}, icId);
   sendSmsOptin();
   unlockBtn.disabled = true;
   unlockBtn.textContent = 'Taking you to checkout...';
@@ -2150,6 +2178,7 @@ unlockBtn.addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderId: orderId, token: accessToken, product: chosenProduct(), code: typedCode() || creatorCode(),
+        fb: fbBrowserDetails(icId),
         childName: childName, email: email
       })
     });
@@ -2403,6 +2432,53 @@ async function resumeUnpaid(id, token, acc) {
   storyGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// Back from Stripe: tell Meta and Trybe about the sale, with what Stripe really
+// charged. The amount in the return URL is the list price, and a free-code
+// book comes back with the same URL, so the real figure is asked of the server
+// (it learns it from Stripe's webhook, which can land a few seconds after the
+// customer does). A free book is never reported as a Purchase. Reported once
+// per order: a refresh of this URL is not a second sale. If this browser does
+// not hold the order's key, the server's own copy of the Purchase covers it.
+async function reportPurchase(id, urlAmt) {
+  const sold = 'fb_purchase_' + id;
+  try { if (sessionStorage.getItem(sold) === '1') return; } catch (err) { /* private mode */ }
+  let cents = null;
+  const st = loadState();
+  const token = st && String(st.orderId) === String(id) ? st.accessToken : null;
+  if (token) {
+    for (let i = 0; i < 10 && cents === null; i++) {
+      try {
+        const r = await fetch(BACKEND_URL + '/orders/' + id + '/access?token=' + encodeURIComponent(token));
+        if (r.ok) {
+          const acc = await r.json();
+          if (acc.paid && typeof acc.amountCents === 'number') cents = acc.amountCents;
+        }
+      } catch (err) { /* try again */ }
+      if (cents === null) await new Promise((res) => setTimeout(res, 2500));
+    }
+  }
+  try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
+  if (cents !== null && cents > 0) {
+    fbTrack('Purchase', { value: cents / 100, currency: 'USD' }, 'purchase-' + id);
+    document.getElementById('reviewAsk').hidden = false;
+  }
+  // Trybe credits the creator whose link brought this buyer. Only the order
+  // number and the amount go - no name, no email. Queued through _trybe.ready
+  // because the script loads async and may not be here yet. Falls back to the
+  // URL's amount only when the real one could not be read.
+  const trybeValue = cents !== null ? cents / 100 : (isFinite(urlAmt) ? urlAmt : 0);
+  if (trybeValue <= 0) return;
+  try {
+    if (window._trybe) {
+      (window._trybe.ready = window._trybe.ready || []).push(function () {
+        if (window.trybe && window.trybe.checkout) {
+          window.trybe.checkout({ orderId: String(id), value: trybeValue, currency: 'USD' });
+        }
+      });
+    }
+  } catch (err) { /* measurement must never break the page */ }
+}
+
 // On load: did we just come back from Stripe, or open an emailed link?
 (function () {
   const params = new URLSearchParams(location.search);
@@ -2417,29 +2493,7 @@ async function resumeUnpaid(id, token, acc) {
   } else if (params.get('paid') === '1' && params.get('order')) {
     // Stripe sends them back with the price of what they bought. Reported once
     // per order id, because a refresh of this URL is not a second sale.
-    var amt = parseFloat(params.get('amt'));
-    var sold = 'fb_purchase_' + params.get('order');
-    var already = false;
-    try { already = sessionStorage.getItem(sold) === '1'; } catch (err) { /* private mode */ }
-    if (!already) {
-      fbTrack('Purchase', { value: isFinite(amt) ? amt : 0, currency: 'USD' });
-      // Trybe credits the creator whose link brought this buyer. Only the order
-      // number and the amount go - no name, no email. Queued through
-      // _trybe.ready because the script loads async and may not be here yet.
-      try {
-        var trybeOrder = params.get('order');
-        var trybeValue = isFinite(amt) ? amt : 0;
-        if (window._trybe) {
-          (window._trybe.ready = window._trybe.ready || []).push(function () {
-            if (window.trybe && window.trybe.checkout) {
-              window.trybe.checkout({ orderId: trybeOrder, value: trybeValue, currency: 'USD' });
-            }
-          });
-        }
-      } catch (err) { /* measurement must never break the page */ }
-      try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
-    }
-    if (isFinite(amt) && amt > 0) document.getElementById('reviewAsk').hidden = false;
+    reportPurchase(params.get('order'), parseFloat(params.get('amt')));
     resumeAfterPayment(params.get('order'));
   } else if (params.get('canceled') === '1') {
     const st = loadState();
