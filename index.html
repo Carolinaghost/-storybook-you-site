@@ -603,6 +603,27 @@ fbq('track', 'PageView');
   .free-banner b { font-weight:800; }
   .free-banner-go { display:inline-block; margin-left:8px; font-weight:800; white-space:nowrap; }
   .free-banner:hover { background:#d14f3d; }
+  .xmas-cutoff { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--brand-coral); }
+  .xmas-cutoff[hidden], .review-ask[hidden], .sticky-cta[hidden] { display: none; }
+  .review-ask { margin: 14px 0 0; font-size: 14px; color: var(--ink-soft); }
+  .review-ask a { color: var(--blue); font-weight: 700; }
+  .trust-strip { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px;
+    margin: 0 0 22px; padding: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .trust-strip li::before { content: "\2713"; color: var(--green); font-weight: 700; margin-right: 6px; }
+  .trust-strip a { color: var(--ink-soft); }
+  .home-faq { max-width: 640px; margin: 34px auto 0; }
+  .home-faq h2 { font-size: 22px; margin: 0 0 10px; text-align: center; }
+  .home-faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin: 0 0 8px; }
+  .home-faq summary { font-weight: 700; cursor: pointer; }
+  .home-faq details p { margin: 8px 0 2px; color: var(--ink-soft); font-size: 15px; line-height: 1.5; }
+  .sticky-cta { display: none; }
+  @media (max-width: 767px) {
+    .sticky-cta:not([hidden]) { display: block; position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 50;
+      background: var(--orange); color: #fff; text-align: center; text-decoration: none; border-radius: 999px;
+      padding: 11px 16px 9px; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 19px; line-height: 1.15;
+      box-shadow: 0 6px 18px rgba(42, 39, 36, 0.25); }
+    .sticky-cta small { display: block; font-family: 'Karla', sans-serif; font-weight: 500; font-size: 12.5px; opacity: .92; }
+  }
 </style>
 
 <script type="application/ld+json">
@@ -657,6 +678,7 @@ fbq('track', 'PageView');
   ]
 }
 </script>
+<script src="holiday-bar.js"></script>
 <!-- Trybe Attribution Pixel (Custom Domain) -->
 <script>
 (function(w,d,p,s,u,pl,at) {
@@ -680,7 +702,7 @@ fbq('track', 'PageView');
        (Facebook/Instagram add ?fbclid= to every ad click) and only while
        free books are left. Everyone else sees the page exactly as before. -->
   <a id="freeBanner" class="free-banner" href="free.html?from=meta-ad" hidden>
-    <b>Free for you:</b> get your child's coloring book on us &mdash; one per family, while they last.
+    <b>Free for you:</b> get your child's coloring book on us &mdash; one per email, while they last.
     <span class="free-banner-go">Claim it &rarr;</span>
   </a>
 
@@ -795,9 +817,16 @@ fbq('track', 'PageView');
     </p>
   </section>
 
+  <ul class="trust-strip" aria-label="Good to know">
+    <li>Secure checkout by Stripe</li>
+    <li>No subscription, no account</li>
+    <li><a href="legal.html#refunds">Refund policy</a></li>
+    <li>Pages made with AI from your photo</li>
+  </ul>
+
   <div class="scatter-stage" data-sample-scatter>
   <div class="step-column" data-sample-block>
-  <div class="page">
+  <div class="page" id="start">
     <div class="step-label">Step 1</div>
     <h2>Upload a photo</h2>
     <p class="step-desc" id="whoStepDesc"></p>
@@ -972,17 +1001,18 @@ fbq('track', 'PageView');
       </p>
       <div class="print-choice" id="printChoice" hidden>
         <label class="print-opt">
-          <input type="radio" name="bookProduct" value="print" checked>
+          <input type="radio" name="bookProduct" value="digital" checked>
+          <span class="opt-text"><strong>Digital book</strong><small>Emailed in about 10 minutes. Print at home or at any print shop.</small></span>
+          <span class="opt-price" id="optDigitalPrice">$15</span>
+        </label>
+        <label class="print-opt">
+          <input type="radio" name="bookProduct" value="print">
           <span class="opt-text"><strong>Digital + printed copy</strong><span class="print-badge">Printed copy free</span>
             <small>The PDF now, plus a printed book mailed to you. Just pay <span id="shipText">$4.99</span> shipping.</small></span>
           <span class="opt-price" id="optPrintPrice">$19.99</span>
         </label>
-        <label class="print-opt">
-          <input type="radio" name="bookProduct" value="digital">
-          <span class="opt-text"><strong>Digital only</strong><small>The PDF to print at home.</small></span>
-          <span class="opt-price" id="optDigitalPrice">$15</span>
-        </label>
         <p class="paywall-note" style="margin-top:2px;">Printed copies ship to US addresses. Delivery usually takes 12&ndash;14 business days.</p>
+        <p class="xmas-cutoff" id="xmasCutoff" hidden>Christmas: order printed copies by 4 December.</p>
       </div>
       <!-- Only shown when a creator link already put a code on this visit.
            Stripe hides its own code box when we attach a code, so without this
@@ -1006,10 +1036,30 @@ fbq('track', 'PageView');
       <p id="leaveNote" class="leave-note" style="display:none;"></p>
       <button type="button" class="submit-btn" id="downloadBtn" style="margin-top:14px; display:none;">Download the book (PDF)</button>
       <div class="error-text" id="downloadError"></div>
+      <!-- Paid orders only (never a free-code book: Trustpilot does not allow
+           reviews tied to a freebie). Shown by the return-from-Stripe code. -->
+      <p class="review-ask" id="reviewAsk" hidden>Tell other parents what you think &mdash;
+        <a href="https://www.trustpilot.com/evaluate/crayonauts.com" target="_blank" rel="noopener">review us on Trustpilot</a>.</p>
     </div>
   </div>
   </div>
   </div>
+
+  <section class="home-faq" aria-labelledby="faqTitle">
+    <h2 id="faqTitle">Questions</h2>
+    <details><summary>How many photos do I need?</summary><p>One clear photo of the child&rsquo;s face is all it takes. For a family book, one photo of each person, up to five people.</p></details>
+    <details><summary>How much does it cost?</summary><p>$15 for a personal book and $25 for a family book with up to five people. You see two finished pages of your own photo free before you pay anything.</p></details>
+    <details><summary>Is it printed and mailed?</summary><p>Yes, in the US. Add a printed copy for $4.99 shipping; it arrives in 12&ndash;14 business days. The PDF is emailed right away either way, so you can also print it at home or at any print shop.</p></details>
+    <details><summary>How long does it take?</summary><p>The two free pages are drawn while you wait. After you pay, the full book usually arrives by email in about ten minutes; a family book takes a little longer.</p></details>
+    <details><summary>What if I don&rsquo;t like how it came out?</summary><p>Email us within 14 days and we&rsquo;ll redraw your book once, free. If you&rsquo;re still not happy after that, we refund half of what you paid.</p></details>
+    <details><summary>What happens to my photo?</summary><p>It&rsquo;s used only to draw your book and deleted once the book is finished. Your download link works for 30 days.</p></details>
+    <details><summary>Is it made with AI?</summary><p>Yes. Your photo is turned into coloring pages by AI. The sample people on this site are AI-generated too.</p></details>
+  </section>
+
+  <!-- Phones only: the upload step is a long scroll below the header, and ad
+       visitors are mostly on phones. Hidden whenever Step 1 or anything under
+       it is on screen, so it never sits on top of the form. -->
+  <a class="sticky-cta" id="stickyCta" href="#start" hidden>See 2 pages free<small>$15 only if you love it</small></a>
 
   <footer class="site-footer">
     <div class="site-social">
@@ -1024,6 +1074,7 @@ fbq('track', 'PageView');
       <a href="superhero-coloring-book.html">Superhero coloring book</a>
       <a href="family-coloring-book.html">Family coloring book</a>
       <a href="birthday-coloring-book.html">Birthday coloring book</a>
+      <a href="gift-coloring-book.html">Gift coloring book</a>
     </div>
     <a href="creators.html">Creators</a>
     <a href="legal.html#privacy">Privacy</a>
@@ -1410,8 +1461,36 @@ function showPrice() {
     document.getElementById('shipText').textContent = money(printShippingCents);
   }
   el.textContent = money(chosenProduct() === 'print' ? cents + printShippingCents : cents);
+  showXmasCutoff();
 }
 document.querySelectorAll('input[name="bookProduct"]').forEach((r) => r.addEventListener('change', showPrice));
+
+// "Order printed copies by 4 December" - only while the printed copy is on
+// offer to this visitor and the cutoff (holiday-bar.js) has not passed.
+function showXmasCutoff() {
+  const el = document.getElementById('xmasCutoff');
+  if (el) el.hidden = !(printEnabled && window.CRAYONAUTS_PRINT_CUTOFF_OPEN === true);
+}
+
+// Phones: a "See 2 pages free" button pinned to the bottom until Step 1 comes
+// into view. Shown only while the visitor is still above Step 1.
+(function () {
+  try {
+    const btn = document.getElementById('stickyCta');
+    const start = document.getElementById('start');
+    if (!btn || !start || !('IntersectionObserver' in window)) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('order') || params.get('paid') || params.get('canceled')) return;
+    new IntersectionObserver((entries) => {
+      const e = entries[0];
+      btn.hidden = e.isIntersecting || e.boundingClientRect.top < 0;
+    }).observe(start);
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      start.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  } catch (err) { /* never let this break the page */ }
+})();
 
 fetch(BACKEND_URL + '/options')
   .then((r) => (r.ok ? r.json() : null))
@@ -2346,6 +2425,7 @@ async function resumeUnpaid(id, token, acc) {
       } catch (err) { /* measurement must never break the page */ }
       try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
     }
+    if (isFinite(amt) && amt > 0) document.getElementById('reviewAsk').hidden = false;
     resumeAfterPayment(params.get('order'));
   } else if (params.get('canceled') === '1') {
     const st = loadState();
@@ -2372,6 +2452,10 @@ async function resumeUnpaid(id, token, acc) {
     const payError = document.getElementById('payError');
     payError.textContent = 'Checkout was canceled - nothing was charged. Unlock whenever you are ready.';
     payError.style.display = 'block';
+  } else if (params.get('theme')) {
+    // ?theme=Christmas from the holiday bar. Only names a style that exists on
+    // the page; anything else is ignored.
+    chooseThemeFromTile(params.get('theme'));
   }
 })();
 
