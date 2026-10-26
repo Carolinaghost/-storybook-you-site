@@ -473,6 +473,12 @@ fbq('track', 'PageView');
   .sms-check input { accent-color: var(--orange); width: 18px; height: 18px; flex: none; margin: 2px 0 0; }
   .sms-fields[hidden] { display: none; }
   .sms-fields input[type=tel] { margin-bottom: 8px; }
+  .code-entry { margin: 0 0 12px; text-align: left; }
+  .code-entry[hidden], .code-fields[hidden] { display: none; }
+  .code-toggle { background: none; border: 0; padding: 0; color: var(--ink-soft); font: inherit; font-size: 13px;
+    text-decoration: underline; cursor: pointer; }
+  .code-fields { margin-top: 8px; }
+  .code-fields input { text-transform: uppercase; }
   .sms-note { margin: 4px 0 0; font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
   /* Digital, or digital plus a printed copy. Only shown once the backend says
      printed copies are on. */
@@ -978,6 +984,17 @@ fbq('track', 'PageView');
         </label>
         <p class="paywall-note" style="margin-top:2px;">Printed copies ship to US addresses. Delivery usually takes 12&ndash;14 business days.</p>
       </div>
+      <!-- Only shown when a creator link already put a code on this visit.
+           Stripe hides its own code box when we attach a code, so without this
+           someone holding a free-book or discount code would have nowhere to
+           type it. A typed code replaces the link's code for this purchase. -->
+      <div class="code-entry" id="codeEntry" hidden>
+        <button type="button" class="code-toggle" id="codeToggle">Have a code?</button>
+        <div class="code-fields" id="codeFields" hidden>
+          <input type="text" id="promoCode" placeholder="Enter your code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+          <div class="error-text" id="promoCodeError">Codes use only letters, numbers and dashes.</div>
+        </div>
+      </div>
       <button type="button" class="submit-btn unlock-btn" id="unlockBtn">Unlock now &mdash; <span id="priceText">$15</span></button>
       <div class="error-text" id="payError">Could not start checkout.</div>
       <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
@@ -1063,6 +1080,28 @@ function creatorCode() {
 }
 
 rememberCreatorCode();
+
+// The code typed into "Have a code?", if any. It wins over the link's code for
+// this one purchase and is never stored, so it cannot take a creator's credit
+// on a later visit. Returns '' for nothing typed, null for something unusable.
+function typedCode() {
+  const box = document.getElementById('promoCode');
+  const raw = (box && !document.getElementById('codeFields').hidden ? box.value : '').trim().toUpperCase();
+  if (!raw) return '';
+  return raw.length <= 64 && /^[A-Z0-9_-]+$/.test(raw) ? raw : null;
+}
+
+(function () {
+  try {
+    if (!creatorCode()) return; // no link code: Stripe shows its own box
+    document.getElementById('codeEntry').hidden = false;
+    document.getElementById('codeToggle').addEventListener('click', function () {
+      document.getElementById('codeFields').hidden = false;
+      this.hidden = true;
+      document.getElementById('promoCode').focus();
+    });
+  } catch (err) { /* never let this break the page */ }
+})();
 
 // --- Free-book banner for Meta ad visitors --------------------------------
 // Meta could not be made to send ads to free.html (it demanded a WhatsApp
@@ -1997,6 +2036,8 @@ unlockBtn.addEventListener('click', async () => {
   if (smsOpt.checked && !smsUsPhone(document.getElementById('smsPhone').value)) {
     document.getElementById('smsPhoneError').style.display = 'block'; ok = false;
   }
+  document.getElementById('promoCodeError').style.display = 'none';
+  if (typedCode() === null) { document.getElementById('promoCodeError').style.display = 'block'; ok = false; }
   if (!ok) return;
 
   track('unlock_clicked');
@@ -2015,7 +2056,7 @@ unlockBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderId: orderId, token: accessToken, product: chosenProduct(), code: creatorCode(),
+        orderId: orderId, token: accessToken, product: chosenProduct(), code: typedCode() || creatorCode(),
         childName: childName, email: email
       })
     });
