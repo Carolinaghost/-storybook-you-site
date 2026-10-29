@@ -473,6 +473,19 @@ fbq('track', 'PageView');
   .sms-check input { accent-color: var(--orange); width: 18px; height: 18px; flex: none; margin: 2px 0 0; }
   .sms-fields[hidden] { display: none; }
   .sms-fields input[type=tel] { margin-bottom: 8px; }
+  /* Several books in one checkout: one per child, each with its own preview. */
+  .cart { margin: 0 0 14px; padding: 12px 14px; border: 2px dashed var(--line); border-radius: 14px; text-align: left; font-size: 14px; }
+  .cart[hidden] { display: none; }
+  .cart-title { margin: 0 0 6px; font-weight: 700; }
+  .cart-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .cart-list li { display: flex; align-items: center; gap: 8px; }
+  .cart-list .cart-name { flex: 1; }
+  .cart-list .cart-price { font-weight: 700; white-space: nowrap; }
+  .cart-remove { background: none; border: 0; padding: 0 2px; color: var(--ink-soft); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+  .cart-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .add-book-btn { display: block; margin: 0 auto 14px; background: #fff; color: var(--orange); border: 2px solid var(--orange);
+    border-radius: 999px; padding: 10px 22px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .add-book-btn[hidden] { display: none; }
   .code-entry { margin: 0 0 12px; text-align: left; }
   .code-entry[hidden], .code-fields[hidden] { display: none; }
   .code-toggle { background: none; border: 0; padding: 0; color: var(--ink-soft); font: inherit; font-size: 13px;
@@ -1025,6 +1038,15 @@ fbq('track', 'PageView');
         <p class="paywall-note" style="margin-top:2px;">Printed copies ship to US addresses. Delivery usually takes 12&ndash;14 business days.</p>
         <p class="xmas-cutoff" id="xmasCutoff" hidden>Christmas: order printed copies by 4 December.</p>
       </div>
+      <!-- Books already added for other children. Paid for together; printed
+           copies go out in one box with one shipping charge. -->
+      <div class="cart" id="cartBox" hidden>
+        <p class="cart-title">Also in this order</p>
+        <ul class="cart-list" id="cartList"></ul>
+        <p class="cart-note" id="cartNote"></p>
+      </div>
+      <button type="button" class="add-book-btn" id="addBookBtn" hidden>+ Add a book for another child</button>
+      <div class="error-text" id="addBookError"></div>
       <!-- Only shown when a creator link already put a code on this visit.
            Stripe hides its own code box when we attach a code, so without this
            someone holding a free-book or discount code would have nowhere to
@@ -1036,7 +1058,7 @@ fbq('track', 'PageView');
           <div class="error-text" id="promoCodeError">Codes use only letters, numbers and dashes.</div>
         </div>
       </div>
-      <button type="button" class="submit-btn unlock-btn" id="unlockBtn">Unlock now &mdash; <span id="priceText">$15</span></button>
+      <button type="button" class="submit-btn unlock-btn" id="unlockBtn"><span id="unlockWord">Unlock now</span> &mdash; <span id="priceText">$15</span></button>
       <div class="error-text" id="payError">Could not start checkout.</div>
       <p class="paywall-note">Secure checkout by Stripe. Card details never touch our server.</p>
     </div>
@@ -1045,6 +1067,7 @@ fbq('track', 'PageView');
       <h3 id="confirmTitle">Order started</h3>
       <p id="confirmText"></p>
       <p id="leaveNote" class="leave-note" style="display:none;"></p>
+      <p id="moreBooksNote" class="leave-note" hidden></p>
       <button type="button" class="submit-btn" id="downloadBtn" style="margin-top:14px; display:none;">Download the book (PDF)</button>
       <div class="error-text" id="downloadError"></div>
       <!-- Paid orders only (never a free-code book: Trustpilot does not allow
@@ -1155,8 +1178,10 @@ function typedCode() {
 
 (function () {
   try {
-    if (!creatorCode()) return; // no link code: Stripe shows its own box
-    document.getElementById('codeEntry').hidden = false;
+    // No link code: Stripe shows its own box - except for an order of several
+    // books, which gets no Stripe box (see showCodeEntry), so this one stays
+    // wired up and appears when the cart does.
+    if (creatorCode()) document.getElementById('codeEntry').hidden = false;
     document.getElementById('codeToggle').addEventListener('click', function () {
       document.getElementById('codeFields').hidden = false;
       this.hidden = true;
@@ -1342,6 +1367,7 @@ async function handleFile(file) {
     fileError.style.display = 'block';
   }
   resetBook();
+  showPrice();   // a photo on screen is one more book to pay for
 }
 
 
@@ -1390,6 +1416,7 @@ function resetBook() {
   accessToken = null;
   orderKey = '';
   resumedOrder = false;
+  try { updateAddBookBtn(); } catch (e) { /* not set up yet */ }
 }
 
 let selectedTheme = '';
@@ -1499,10 +1526,85 @@ function showPrice() {
     document.getElementById('optPrintPrice').textContent = money(cents + printShippingCents);
     document.getElementById('shipText').textContent = money(printShippingCents);
   }
-  el.textContent = money(chosenProduct() === 'print' ? cents + printShippingCents : cents);
+  // The cart: the books already added, plus this one if there is one. One
+  // shipping charge however many are printed - they go out in one box.
+  // try: this can run while the page is still setting itself up, before
+  // the variables hasCurrentBook reads exist.
+  const items = loadCart();
+  let here = false;
+  try { here = hasCurrentBook(); } catch (e) { here = false; }
+  let total = items.reduce((sum, it) => sum + (it.family ? familyPriceCents : priceCents), 0);
+  let printed = items.some((it) => it.product === 'print');
+  if (here) { total += cents; printed = printed || chosenProduct() === 'print'; }
+  if (printed) total += printShippingCents;
+  const count = items.length + (here ? 1 : 0);
+  el.textContent = money(items.length ? total : (chosenProduct() === 'print' ? cents + printShippingCents : cents));
+  const word = document.getElementById('unlockWord');
+  if (word) word.textContent = items.length && count > 1 ? 'Unlock ' + count + ' books' : 'Unlock now';
   showXmasCutoff();
+  try { renderCart(); } catch (e) { /* not set up yet - shown again once it is */ }
 }
 document.querySelectorAll('input[name="bookProduct"]').forEach((r) => r.addEventListener('change', showPrice));
+
+// ---------------------------------------------------------------------------
+// More than one book in one order - one per child. Each book is still drawn
+// from its own photo and has its own free preview; "Add a book for another
+// child" puts the one on screen into the cart (it is already an order on the
+// server, held by its key) and clears Step 1 for the next photo. Unlock then
+// pays for all of them at once. Kept in localStorage so a trip to Stripe and
+// back, or a cancelled checkout, does not lose the cart.
+const CART_KEY = 'crayonauts_cart';
+const MAX_CART = 4;   // plus the one on screen: five books in one checkout
+function loadCart() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    return Array.isArray(c) ? c.filter((it) => it && it.orderId && it.token) : [];
+  } catch (e) { return []; }
+}
+function saveCart(items) {
+  try { localStorage.setItem(CART_KEY, JSON.stringify(items || [])); } catch (e) { /* private mode */ }
+}
+// Is there a book on screen to pay for, besides the cart?
+function hasCurrentBook() {
+  if (resumedOrder && orderId && accessToken) return true;
+  if (bookMode === 'family') return familyCast().length >= 2;
+  return !!selectedFile;
+}
+function cartEscape(t) {
+  return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function renderCart() {
+  const box = document.getElementById('cartBox');
+  const list = document.getElementById('cartList');
+  if (!box || !list) return;
+  const items = loadCart();
+  box.hidden = items.length === 0;
+  list.innerHTML = items.map((it, i) => '<li><span class="cart-name">'
+    + cartEscape(it.childName || 'Book ' + (i + 1)) + (it.family ? ' (family book)' : '')
+    + (it.product === 'print' ? ' &middot; digital + printed copy' : ' &middot; digital') + '</span>'
+    + '<span class="cart-price">' + money(it.family ? familyPriceCents : priceCents) + '</span>'
+    + '<button type="button" class="cart-remove" data-i="' + i + '">Remove</button></li>').join('');
+  list.querySelectorAll('.cart-remove').forEach((b) => b.addEventListener('click', () => {
+    const now = loadCart();
+    now.splice(Number(b.dataset.i), 1);
+    saveCart(now);
+    showPrice();
+  }));
+  const printed = items.some((it) => it.product === 'print') || (hasCurrentBook() && chosenProduct() === 'print');
+  document.getElementById('cartNote').textContent = items.length
+    ? (printed ? 'Printed copies go out together in one box - shipping is charged once.' : '')
+      + (hasCurrentBook() ? '' : (printed ? ' ' : '') + 'Add another photo above, or unlock what is in your order now.')
+    : '';
+  // A cart gets no code box at Stripe, so it gets ours.
+  if (items.length) document.getElementById('codeEntry').hidden = false;
+  updateAddBookBtn();
+}
+function updateAddBookBtn() {
+  const btn = document.getElementById('addBookBtn');
+  if (!btn) return;
+  const drawn = Array.isArray(storyPages) && storyPages.filter(Boolean).length > 0;
+  btn.hidden = !(drawn && orderId && accessToken && loadCart().length < MAX_CART);
+}
 
 // "Order printed copies by 4 December" - only while the printed copy is on
 // offer to this visitor and the cutoff (holiday-bar.js) has not passed.
@@ -1625,6 +1727,7 @@ async function addFamilyPhotos(files) {
     }
     renderPeople();
   }
+  showPrice();
 }
 
 // Everyone to be drawn, in order. The backend needs a label per photo to tie
@@ -2104,6 +2207,7 @@ previewBtn.addEventListener('click', async () => {
       generateError.style.display = 'block';
     } else {
       track('preview_shown');
+      showPrice();
       document.getElementById('previewCountText').textContent = freePreviewPages;
       document.getElementById('totalCountText').textContent = sceneCount;
       document.getElementById('paywallSeen').hidden = false;
@@ -2151,15 +2255,20 @@ unlockBtn.addEventListener('click', async () => {
   // Opened from a "come back to your book" link: the order and its photo are
   // on the server already, so nothing has to be uploaded again to pay.
   const resumed = !!(resumedOrder && orderId && accessToken);
+  // Books already in the cart. With nothing new on screen, the first of them
+  // leads the checkout and the rest ride along; otherwise the one on screen
+  // leads and all of them ride along.
+  const cartItems = loadCart();
+  const fromCart = !resumed && cartItems.length > 0 && !hasCurrentBook();
   let cast = [];
-  if (!resumed) {
+  if (!resumed && !fromCart) {
     const ready = readyToDraw(payError);
     if (!ready) return;
     cast = ready.cast;
   }
   // Asked in both kinds of book: it is who the book is for, and the name the
   // book, the receipt and the emails use.
-  const childName = document.getElementById('childName').value.trim();
+  const childName = fromCart ? cartItems[0].childName : document.getElementById('childName').value.trim();
   const email = document.getElementById('parentEmail').value.trim();
   let ok = true;
   if (!childName) {
@@ -2181,9 +2290,19 @@ unlockBtn.addEventListener('click', async () => {
   unlockBtn.disabled = true;
   unlockBtn.textContent = 'Taking you to checkout...';
   try {
-    // No preview yet, or Step 1 changed since it was drawn: start the order
-    // for what is on screen now.
-    if (!resumed && (!orderId || !accessToken || orderKey !== currentBookKey())) {
+    let lead = { product: chosenProduct() };
+    let extra = cartItems;
+    if (fromCart) {
+      // The first book in the cart leads. It is remembered as "the" order so
+      // the page coming back from Stripe watches it, as it would any other.
+      lead = cartItems[0];
+      extra = cartItems.slice(1);
+      orderId = lead.orderId;
+      accessToken = lead.token;
+      document.getElementById('childName').value = lead.childName || '';
+    } else if (!resumed && (!orderId || !accessToken || orderKey !== currentBookKey())) {
+      // No preview yet, or Step 1 changed since it was drawn: start the order
+      // for what is on screen now.
       if (!storyPages.filter(Boolean).length) sceneCount = await fetchSceneCount(selectedTheme);
       await startOrder(cast, childName, email);
     }
@@ -2192,9 +2311,11 @@ unlockBtn.addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderId: orderId, token: accessToken, product: chosenProduct(), code: typedCode() || creatorCode(),
+        orderId: orderId, token: accessToken, product: lead.product === 'print' ? 'print' : 'digital',
+        code: typedCode() || creatorCode(),
         fb: fbBrowserDetails(icId),
-        childName: childName, email: email
+        childName: childName, email: email,
+        extra: extra.map((it) => ({ orderId: it.orderId, token: it.token, product: it.product, childName: it.childName }))
       })
     });
     const d = await r.json();
@@ -2205,7 +2326,52 @@ unlockBtn.addEventListener('click', async () => {
     payError.style.display = 'block';
     unlockBtn.disabled = false;
     unlockBtn.innerHTML = unlockLabel;
+    showPrice();
   }
+});
+
+// "Add a book for another child": the book on screen (its free preview drawn,
+// so it is an order on the server) goes into the cart, and Step 1 is cleared
+// for the next photo. Nothing is paid until Unlock.
+document.getElementById('addBookBtn').addEventListener('click', () => {
+  const err = document.getElementById('addBookError');
+  err.style.display = 'none';
+  const name = document.getElementById('childName').value.trim();
+  if (!name) {
+    document.getElementById('childNameError').style.display = 'block';
+    document.getElementById('childName').focus();
+    return;
+  }
+  if (!orderId || !accessToken || !storyPages.filter(Boolean).length || orderKey !== currentBookKey()) {
+    err.textContent = 'See the free preview of this book first, then add it.';
+    err.style.display = 'block';
+    return;
+  }
+  const items = loadCart();
+  if (items.length >= MAX_CART) {
+    err.textContent = 'That is the most books we can take in one order.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!items.some((it) => String(it.orderId) === String(orderId))) {
+    items.push({ orderId: orderId, token: accessToken, childName: name, product: chosenProduct(), family: bookMode === 'family' });
+  }
+  saveCart(items);
+  track('book_added');
+  // Clear Step 1 for the next child. The email stays - it is where every
+  // book goes.
+  selectedFile = null;
+  photoDataUrl = null;
+  previews.style.display = 'none';
+  dropzone.classList.remove('filled');
+  origPreview.removeAttribute('src');
+  try { document.getElementById('fileInput').value = ''; } catch (e) {}
+  if (bookMode === 'family') { people = []; renderPeople(); }
+  document.getElementById('childName').value = '';
+  resetBook();
+  saveState();
+  showPrice();
+  document.getElementById('start').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 // Coming back from Stripe, or opening the emailed link. Either way the book is
@@ -2454,12 +2620,12 @@ async function resumeUnpaid(id, token, acc) {
 // customer does). A free book is never reported as a Purchase. Reported once
 // per order: a refresh of this URL is not a second sale. If this browser does
 // not hold the order's key, the server's own copy of the Purchase covers it.
-async function reportPurchase(id, urlAmt) {
+async function reportPurchase(id, urlAmt, cartToken) {
   const sold = 'fb_purchase_' + id;
   try { if (sessionStorage.getItem(sold) === '1') return; } catch (err) { /* private mode */ }
   let cents = null;
   const st = loadState();
-  const token = st && String(st.orderId) === String(id) ? st.accessToken : null;
+  const token = cartToken || (st && String(st.orderId) === String(id) ? st.accessToken : null);
   if (token) {
     for (let i = 0; i < 10 && cents === null; i++) {
       try {
@@ -2508,7 +2674,30 @@ async function reportPurchase(id, urlAmt) {
   } else if (params.get('paid') === '1' && params.get('order')) {
     // Stripe sends them back with the price of what they bought. Reported once
     // per order id, because a refresh of this URL is not a second sale.
-    reportPurchase(params.get('order'), parseFloat(params.get('amt')));
+    // Several books in one checkout: the others are listed in ?more=, and
+    // each is reported (with its own share of the money) and named on the
+    // page. The cart is emptied of whatever was just paid for.
+    const more = String(params.get('more') || '').split('-').filter((x) => /^\d+$/.test(x));
+    if (more.length) {
+      const items = loadCart();
+      const paidIds = new Set([String(params.get('order'))].concat(more));
+      const others = items.filter((it) => more.includes(String(it.orderId)));
+      // The amount in the URL is the whole cart's, so it is no use to any one
+      // book: each one asks the server for its own.
+      reportPurchase(params.get('order'), NaN);
+      others.forEach((it) => reportPurchase(it.orderId, NaN, it.token));
+      saveCart(items.filter((it) => !paidIds.has(String(it.orderId))));
+      const names = others.map((it) => it.childName).filter(Boolean);
+      const note = document.getElementById('moreBooksNote');
+      const one = others.length === 1;
+      note.textContent = (one ? 'The other book in this order' : 'The other ' + others.length + ' books in this order')
+        + (names.length ? ' (' + names.join(', ') + ')' : '')
+        + (one ? ' is being drawn too, and is emailed to you on its own when it is ready.'
+          : ' are being drawn too. Each one is emailed to you on its own when it is ready.');
+      note.hidden = false;
+    } else {
+      reportPurchase(params.get('order'), parseFloat(params.get('amt')));
+    }
     resumeAfterPayment(params.get('order'));
   } else if (params.get('canceled') === '1') {
     const st = loadState();
