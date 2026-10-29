@@ -1367,6 +1367,7 @@ async function handleFile(file) {
     fileError.style.display = 'block';
   }
   resetBook();
+  showPrice();   // a photo on screen is one more book to pay for
 }
 
 
@@ -1726,6 +1727,7 @@ async function addFamilyPhotos(files) {
     }
     renderPeople();
   }
+  showPrice();
 }
 
 // Everyone to be drawn, in order. The backend needs a label per photo to tie
@@ -2205,7 +2207,7 @@ previewBtn.addEventListener('click', async () => {
       generateError.style.display = 'block';
     } else {
       track('preview_shown');
-      updateAddBookBtn();
+      showPrice();
       document.getElementById('previewCountText').textContent = freePreviewPages;
       document.getElementById('totalCountText').textContent = sceneCount;
       document.getElementById('paywallSeen').hidden = false;
