@@ -362,6 +362,15 @@ fbq('track', 'PageView');
     aspect-ratio: 1;
   }
   .story-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .story-page img { cursor: zoom-in; }
+  .zoom-hint { text-align: center; color: var(--ink-soft); font-size: 13px; margin: 8px 0 0; }
+  .zoom-hint[hidden], .page-zoom[hidden] { display: none; }
+  .page-zoom { position: fixed; inset: 0; z-index: 100; background: rgba(20,20,20,.88); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+  .page-zoom img { max-width: 100%; max-height: calc(100vh - 90px); object-fit: contain; background: #fff; border-radius: 8px; }
+  .page-zoom-close { position: absolute; top: 10px; right: 12px; width: 44px; height: 44px; border: 0; border-radius: 50%;
+    background: #fff; color: #222; font-size: 28px; line-height: 44px; cursor: pointer; }
+  .page-zoom-hint { color: #fff; opacity: .8; font-size: 13px; margin: 10px 0 0; }
   .story-page .num {
     position: absolute;
     top: 4px;
@@ -398,6 +407,34 @@ fbq('track', 'PageView');
   #holidayPill.active .career-label { display: none; }
   .intake-row--split .theme-pill { padding: 6px 12px; font-size: 13px; }
   .intake-row--split .themes { gap: 6px 8px; }
+  .intake-row--styles { margin-top: 0; }
+  .intake-row--styles .theme-pill { padding: 6px 12px; font-size: 13px; }
+  .intake-row--styles .themes { gap: 6px 8px; }
+  .mode-picker { margin: 0; }
+  .mode-picker .theme-pill { padding: 6px 12px; font-size: 13px; }
+  .style-label { margin-top: 20px; }
+  /* A real before/after inside the empty photo box: with the examples strip
+     now under Step 1, this is what tells a phone visitor on the first screen
+     what the photo turns into. */
+  .dz-example { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+  .dz-example img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(0,0,0,.08); background: #fff; }
+  .dz-example .sample-arrow { color: var(--orange); font-weight: 700; }
+  .dz-example + svg { display: none; }
+  /* Phones: tighter header so the photo box is on the first screen. Same
+     words, less air. */
+  @media (max-width: 640px) {
+    .wrap { padding-top: 22px; }
+    header { margin-bottom: 14px; padding-top: 0; }
+    .tagline { font-size: 16px; margin-top: 4px; line-height: 1.4; }
+    .gift { margin: 6px 0 0; font-size: 16px; line-height: 1.35; }
+    .pricing { margin: 8px 0 0; font-size: 15px; line-height: 1.45; }
+    .pricing .free { font-size: 13.5px; margin-top: 2px; }
+    #start { padding-top: 16px; }
+    #start .step-label { margin-bottom: 4px; }
+    #start .dropzone:not(.filled) { padding: 16px 14px; }
+    .dz-example { margin-bottom: 6px; }
+    .dz-example img { width: 56px; height: 56px; }
+  }
 
   .samples { padding-bottom: 20px; }
 
@@ -609,13 +646,6 @@ fbq('track', 'PageView');
     .scatter-stage .ss-scatter { display: none; }
     .scatter-stage .page { margin-bottom: 0; }
   }
-  .free-banner { display:block; margin:0 0 18px; padding:14px 18px; border-radius:14px;
-    background:#E85D4A; color:#fff; text-decoration:none; font-size:16px; line-height:1.4;
-    text-align:center; box-shadow:0 4px 14px rgba(232,93,74,.25); }
-  .free-banner[hidden] { display:none; }
-  .free-banner b { font-weight:800; }
-  .free-banner-go { display:inline-block; margin-left:8px; font-weight:800; white-space:nowrap; }
-  .free-banner:hover { background:#d14f3d; }
   #themes.need-pick { outline: 2px dashed var(--danger); outline-offset: 6px; border-radius: 14px; }
   .xmas-cutoff { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--brand-coral); }
   .xmas-cutoff[hidden], .review-ask[hidden], .sticky-cta[hidden] { display: none; }
@@ -718,13 +748,6 @@ fbq('track', 'PageView');
 <body>
 <div class="wrap">
 
-  <!-- Free-book banner, shown only to people who arrive from a Meta ad
-       (Facebook/Instagram add ?fbclid= to every ad click) and only while
-       free books are left. Everyone else sees the page exactly as before. -->
-  <a id="freeBanner" class="free-banner" href="free.html?from=meta-ad" hidden>
-    <b>Free for you:</b> get your child's coloring book on us &mdash; one per email, while they last.
-    <span class="free-banner-go">Claim it &rarr;</span>
-  </a>
 
   <header>
     <div class="brand">
@@ -791,59 +814,6 @@ fbq('track', 'PageView');
     </div>
   </header>
 
-  <!-- What you get. On a wide screen the examples sit in the top corners beside
-       the header and loose sample pages drift down both sides of the steps.
-       Where there is no room beside the column, the same examples show as a
-       small strip above Step 1 instead. -->
-  <section class="samples samples-strip" aria-label="What you get">
-    <h2 class="strip-title">What you get</h2>
-    <div class="sample-grid">
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/examples/jasmin-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a yellow shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/examples/jasmin-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn as a caped superhero on a rooftop">
-        </div>
-        <figcaption>Superhero</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/examples/mei-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a pink shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/examples/mei-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn at a door in a magic tree">
-        </div>
-        <figcaption>Fairy tale</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/examples/owen-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling boy in a blue shirt">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/examples/owen-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as an explorer in a jungle clearing, holding a treasure map">
-        </div>
-        <figcaption>Adventure scene</figcaption>
-      </figure>
-      <figure class="sample">
-        <div class="sample-pair">
-          <img src="samples/examples/malik-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a boy in a green hoodie looking to the side">
-          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
-          <img src="samples/examples/malik-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a firefighter at the station, putting on his helmet beside a fire engine">
-        </div>
-        <figcaption>Firefighter</figcaption>
-      </figure>
-    </div>
-    <p class="sample-note">
-      The photos above are AI-generated stand-ins, not real customers &mdash; we do not publish
-      our customers' photos. The coloring pages are real output from this site.
-    </p>
-  </section>
-
-  <ul class="trust-strip" aria-label="Good to know">
-    <li>Secure checkout by Stripe</li>
-    <li>No subscription, no account</li>
-    <li><a href="legal.html#refunds">Refund policy</a></li>
-    <li>Pages made with AI from your photo</li>
-  </ul>
-
   <div class="scatter-stage" data-sample-scatter>
   <div class="step-column" data-sample-block>
   <div class="page" id="start">
@@ -851,12 +821,66 @@ fbq('track', 'PageView');
     <h2>Upload a photo</h2>
     <p class="step-desc" id="whoStepDesc"></p>
 
-    <div class="intake-row intake-row--split">
-      <div class="themes" id="bookModePicker">
-        <button type="button" class="theme-pill active" data-mode="one">Personal</button>
-        <button type="button" class="theme-pill" data-mode="family">The whole family</button>
+    <!-- The photo comes first. Clarity, 30 Oct - 1 Nov: half of all visitors
+         left before scrolling as far as the photo box, which sat two phone
+         screens down under the examples and the style choices. Now it is the
+         first thing in Step 1, which is the first thing under the header.
+         Style and age still have to be chosen before the free preview is
+         drawn, so they sit between the photo and the preview button. -->
+    <div class="themes mode-picker" id="bookModePicker">
+      <button type="button" class="theme-pill active" data-mode="one">Personal</button>
+      <button type="button" class="theme-pill" data-mode="family">The whole family</button>
+    </div>
+
+    <!-- A family book: one photo per person, nothing else. Tap + (or drop
+         photos anywhere on the box) and the + comes back for the next one,
+         up to the most the backend will draw. No names - the photos go in
+         order and the first is who the book is about. -->
+    <div id="familyPanel" data-clarity-mask="True" style="display:none; margin-top:12px;">
+      <div class="dropzone family-drop" id="familyDrop">
+        <div class="family-row">
+          <div id="peopleRows"></div>
+          <button type="button" class="add-person" id="addPersonBtn" aria-label="Add a photo">+</button>
+        </div>
+        <p class="people-hint" id="peopleHint"></p>
       </div>
-      <div class="intake-divider" aria-hidden="true"></div>
+      <input type="file" id="familyFileInput" accept="image/*" multiple>
+      <div class="error-text" id="peopleError"></div>
+    </div>
+
+    <!-- Single-person books only. A family book asks for each photo beside the
+         name it belongs to, above, so this whole block is hidden for one. -->
+    <div id="uploadStep" style="margin-top:12px;">
+      <div id="singleUpload">
+      <!-- Empty, it asks for a photo. Once there is one, the photo itself sits
+           in here (as in the mockup), and tapping it again swaps it. -->
+      <div class="dropzone" id="dropzone">
+        <div class="dz-empty">
+          <div class="dz-example" aria-hidden="true">
+            <img src="samples/examples/jasmin-photo.jpg" width="700" height="700" alt="">
+            <span class="sample-arrow">&rarr;</span>
+            <img src="samples/examples/jasmin-page.jpg" width="700" height="700" alt="">
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <p>Drop a photo here, or tap to choose one</p>
+          <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
+        </div>
+        <div class="previews" id="previews" data-clarity-mask="True" style="display:none;">
+          <img id="origPreview" alt="Your photo">
+          <div class="dz-meta">
+            <p>Your photo</p>
+            <span>Logos on clothes are drawn as plain fabric.</span>
+          </div>
+          <span class="dz-change">Change</span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="error-text" id="fileError">Choose a photo to continue.</div>
+      </div>
+    </div>
+
+    <span class="intake-label style-label">Pick a style</span>
+    <div class="intake-row intake-row--styles">
       <div class="themes" id="themes">
         <!-- Style pills, visible again: with the dropdown, every ad visitor on
              26 Sep left the default (Portrait); with pills they picked
@@ -936,48 +960,6 @@ fbq('track', 'PageView');
       </label>
     </div>
 
-    <!-- A family book: one photo per person, nothing else. Tap + (or drop
-         photos anywhere on the box) and the + comes back for the next one,
-         up to the most the backend will draw. No names - the photos go in
-         order and the first is who the book is about. -->
-    <div id="familyPanel" data-clarity-mask="True" style="display:none; margin-top:20px;">
-      <div class="dropzone family-drop" id="familyDrop">
-        <div class="family-row">
-          <div id="peopleRows"></div>
-          <button type="button" class="add-person" id="addPersonBtn" aria-label="Add a photo">+</button>
-        </div>
-        <p class="people-hint" id="peopleHint"></p>
-      </div>
-      <input type="file" id="familyFileInput" accept="image/*" multiple>
-      <div class="error-text" id="peopleError"></div>
-    </div>
-
-    <!-- Single-person books only. A family book asks for each photo beside the
-         name it belongs to, above, so this whole block is hidden for one. -->
-    <div id="uploadStep" style="margin-top:20px;">
-      <div id="singleUpload">
-      <!-- Empty, it asks for a photo. Once there is one, the photo itself sits
-           in here (as in the mockup), and tapping it again swaps it. -->
-      <div class="dropzone" id="dropzone">
-        <div class="dz-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-          <p>Drop a photo here, or tap to choose one</p>
-          <span>JPG or PNG, one clear face shot works best. Logos on clothes are drawn as plain fabric.</span>
-        </div>
-        <div class="previews" id="previews" data-clarity-mask="True" style="display:none;">
-          <img id="origPreview" alt="Your photo">
-          <div class="dz-meta">
-            <p>Your photo</p>
-            <span>Logos on clothes are drawn as plain fabric.</span>
-          </div>
-          <span class="dz-change">Change</span>
-        </div>
-      </div>
-      <input type="file" id="fileInput" accept="image/*">
-      <div class="error-text" id="fileError">Choose a photo to continue.</div>
-      </div>
-    </div>
-
     <div class="cta-row">
       <button type="button" class="submit-btn" id="previewBtn" style="margin-top:0;">See my free preview</button>
       <button type="button" class="submit-btn" id="stopBtn" style="margin-top:0; display:none; background:#fff; color:var(--danger); border:2px solid var(--danger);">Stop</button>
@@ -986,6 +968,7 @@ fbq('track', 'PageView');
     <div id="generateStatus" data-clarity-mask="True" style="display:none; text-align:center; padding:20px; color:var(--ink-soft); font-size:14px;"></div>
 
     <div id="storyGrid" data-clarity-mask="True" style="display:none; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 18px;"></div>
+    <p class="zoom-hint" id="zoomHint" hidden>Tap a page to see it full size.</p>
   </div>
 
   <div class="step-arrow" aria-hidden="true">&darr;</div>
@@ -1079,6 +1062,59 @@ fbq('track', 'PageView');
   </div>
   </div>
 
+  <!-- What you get. On a wide screen the examples sit in the top corners beside
+       the header and loose sample pages drift down both sides of the steps.
+       Where there is no room beside the column, the same examples show as a
+       small strip under the steps (moved there on 2 Nov so the photo box is on the first screen and nothing sits between the free preview and Unlock). -->
+  <section class="samples samples-strip" aria-label="What you get">
+    <h2 class="strip-title">What you get</h2>
+    <div class="sample-grid">
+      <figure class="sample">
+        <div class="sample-pair">
+          <img src="samples/examples/jasmin-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a yellow shirt">
+          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+          <img src="samples/examples/jasmin-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn as a caped superhero on a rooftop">
+        </div>
+        <figcaption>Superhero</figcaption>
+      </figure>
+      <figure class="sample">
+        <div class="sample-pair">
+          <img src="samples/examples/mei-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling girl in a pink shirt">
+          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+          <img src="samples/examples/mei-page.jpg" width="700" height="700" loading="lazy" alt="The same girl drawn at a door in a magic tree">
+        </div>
+        <figcaption>Fairy tale</figcaption>
+      </figure>
+      <figure class="sample">
+        <div class="sample-pair">
+          <img src="samples/examples/owen-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a smiling boy in a blue shirt">
+          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+          <img src="samples/examples/owen-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as an explorer in a jungle clearing, holding a treasure map">
+        </div>
+        <figcaption>Adventure scene</figcaption>
+      </figure>
+      <figure class="sample">
+        <div class="sample-pair">
+          <img src="samples/examples/malik-photo.jpg" width="700" height="700" loading="lazy" alt="Photo of a boy in a green hoodie looking to the side">
+          <span class="sample-arrow" aria-hidden="true">&rarr;</span>
+          <img src="samples/examples/malik-page.jpg" width="700" height="700" loading="lazy" alt="The same boy drawn as a firefighter at the station, putting on his helmet beside a fire engine">
+        </div>
+        <figcaption>Firefighter</figcaption>
+      </figure>
+    </div>
+    <p class="sample-note">
+      The photos above are AI-generated stand-ins, not real customers &mdash; we do not publish
+      our customers' photos. The coloring pages are real output from this site.
+    </p>
+  </section>
+
+  <ul class="trust-strip" aria-label="Good to know">
+    <li>Secure checkout by Stripe</li>
+    <li>No subscription, no account</li>
+    <li><a href="legal.html#refunds">Refund policy</a></li>
+    <li>Pages made with AI from your photo</li>
+  </ul>
+
   <section class="home-faq" aria-labelledby="faqTitle">
     <h2 id="faqTitle">Questions</h2>
     <details><summary>How many photos do I need?</summary><p>One clear photo of the child&rsquo;s face is all it takes. For a family book, one photo of each person, up to five people.</p></details>
@@ -1093,6 +1129,14 @@ fbq('track', 'PageView');
   <!-- Phones only: the upload step is a long scroll below the header, and ad
        visitors are mostly on phones. Hidden whenever Step 1 or anything under
        it is on screen, so it never sits on top of the form. -->
+  <!-- Full-size view of a drawn page. Clarity, 1 Nov: a visitor who made
+       three previews kept tapping the small page tiles and nothing happened.
+       Masked like the grid itself: the page is a drawing of their child. -->
+  <div class="page-zoom" id="pageZoom" role="dialog" aria-modal="true" aria-label="Page, full size" data-clarity-mask="True" hidden>
+    <img id="pageZoomImg" alt="">
+    <button type="button" class="page-zoom-close" id="pageZoomClose" aria-label="Close">&times;</button>
+    <p class="page-zoom-hint">Tap anywhere to close</p>
+  </div>
   <a class="sticky-cta" id="stickyCta" href="#start" hidden>See 2 pages free<small>$15 only if you love it</small></a>
 
   <footer class="site-footer">
@@ -1190,25 +1234,10 @@ function typedCode() {
   } catch (err) { /* never let this break the page */ }
 })();
 
-// --- Free-book banner for Meta ad visitors --------------------------------
-// Meta could not be made to send ads to free.html (it demanded a WhatsApp
-// number), so the ads still land here. Facebook and Instagram add ?fbclid= to
-// every ad click; that, a utm_source naming them, or a referrer from their
-// domains shows the banner. ?free=1 shows it for testing.
-(function () {
-  try {
-    const q = new URLSearchParams(location.search);
-    let ref = '';
-    try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) {}
-    const fromMeta = q.has('fbclid') || q.get('free') === '1'
-      || /^(facebook|fb|instagram|ig|meta)$/i.test(q.get('utm_source') || '')
-      || /(^|\.)(facebook\.com|instagram\.com|fb\.com)$/i.test(ref);
-    if (!fromMeta) return;
-    fetch(BACKEND_URL + '/giveaway/status').then((r) => r.json()).then((st) => {
-      if (st && st.open) document.getElementById('freeBanner').hidden = false;
-    }).catch(() => {});
-  } catch (err) { /* never let the banner break the page */ }
-})();
+// The free-book banner for Meta ad visitors (8 Oct) was removed on 2 Nov at
+// Jonathan's call: the ads are paid sales ads now, and offering every paid
+// click a free book first worked against them. free.html still works for
+// anyone sent there directly.
 
 // --- Funnel counters -------------------------------------------------------
 // How many people land, how many upload, how many pay. Deliberately anonymous:
@@ -1857,6 +1886,31 @@ const stopBtn = document.getElementById('stopBtn');
 const generateError = document.getElementById('generateError');
 const generateStatus = document.getElementById('generateStatus');
 const storyGrid = document.getElementById('storyGrid');
+
+// Tap a drawn page to see it full size; tap anywhere (or Escape) to close.
+// The hint shows once there is a real page in the grid to tap.
+(function () {
+  try {
+    const zoom = document.getElementById('pageZoom');
+    const zoomImg = document.getElementById('pageZoomImg');
+    const hint = document.getElementById('zoomHint');
+    const close = () => { zoom.hidden = true; zoomImg.removeAttribute('src'); document.body.style.overflow = ''; };
+    storyGrid.addEventListener('click', (ev) => {
+      const img = ev.target.closest('.story-page img');
+      if (!img || !img.getAttribute('src')) return;
+      zoomImg.src = img.src;
+      zoomImg.alt = img.alt || 'Page';
+      zoom.hidden = false;
+      document.body.style.overflow = 'hidden';
+      track('page_zoomed');
+    });
+    zoom.addEventListener('click', close);
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !zoom.hidden) close(); });
+    new MutationObserver(() => {
+      hint.hidden = storyGrid.style.display === 'none' || !storyGrid.querySelector('.story-page img');
+    }).observe(storyGrid, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+  } catch (err) { /* never let this break the page */ }
+})();
 const paywall = document.getElementById('paywall');
 const unlockBtn = document.getElementById('unlockBtn');
 
@@ -1889,7 +1943,8 @@ function saveState() {
       orderId, accessToken, photoDataUrl, selectedTheme, childCount, audience, detailLevel,
       notes: document.getElementById('notes').value.trim(),
       childName: document.getElementById('childName').value.trim(),
-      email: document.getElementById('parentEmail').value.trim()
+      email: document.getElementById('parentEmail').value.trim(),
+      product: (document.querySelector('input[name="bookProduct"]:checked') || {}).value || ''
     }));
   } catch (e) { /* private mode or full quota - not fatal before payment */ }
 }
@@ -2721,9 +2776,32 @@ async function reportPurchase(id, urlAmt, cartToken) {
       accessToken = st.accessToken;
       orderKey = currentBookKey();
     }
+    // Put back the format they picked (digital or printed) so the price they
+    // come back to is the one they left.
+    if (st && st.product) {
+      const r = document.querySelector('input[name="bookProduct"][value="' + st.product + '"]');
+      if (r) { r.checked = true; showPrice(); }
+    }
     const payError = document.getElementById('payError');
     payError.textContent = 'Checkout was canceled - nothing was charged. Unlock whenever you are ready.';
     payError.style.display = 'block';
+    // Clarity, 31 Oct: the one visitor who backed out of Stripe landed at the
+    // top of the page with her book nowhere on screen, sat for five minutes
+    // and left. Now her two free pages are drawn back in and the page goes
+    // straight to them, with Unlock just below.
+    if (st && st.orderId && st.accessToken) {
+      (async () => {
+        try {
+          const r = await fetch(BACKEND_URL + '/orders/' + st.orderId + '/access?token=' + encodeURIComponent(st.accessToken));
+          const acc = r.ok ? await r.json() : null;
+          if (!acc || acc.paid) return;
+          await resumeUnpaid(st.orderId, st.accessToken, acc);
+          const note = document.getElementById('generateStatus');
+          note.textContent = 'Checkout was canceled - nothing was charged. Here are your free pages again - Unlock is further down when you are ready.';
+          note.style.display = 'block';
+        } catch (err) { /* the message by Unlock still says what happened */ }
+      })();
+    }
   } else if (params.get('theme')) {
     // ?theme=Christmas from the holiday bar. Only names a style that exists on
     // the page; anything else is ignored.
