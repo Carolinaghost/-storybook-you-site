@@ -1300,6 +1300,17 @@ function fbBrowserDetails(icId) {
   }
   return { fbp: fbCookie('_fbp'), fbc: fbc, url: location.href.split('#')[0].slice(0, 480), icId: icId || '' };
 }
+// The creator platform's visitor id (Trybe). Sent with checkout so the server
+// can tell Trybe about the sale once it is paid - that is how a creator whose
+// video brought the buyer gets credited. Empty if the Trybe script is blocked.
+function trybeVisitorId() {
+  try {
+    const id = window.trybe && typeof window.trybe.getVisitorId === 'function' ? window.trybe.getVisitorId() : '';
+    if (typeof id === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(id)) return id;
+  } catch (err) { /* ignore */ }
+  const c = fbCookie('ugc_vid_7715c0d8-d693-48e9-8c3b-866630920e2d') || fbCookie('ugc_vid');
+  return /^[A-Za-z0-9_-]{8,64}$/.test(c) ? c : '';
+}
 
 // The site's own counters already fire at exactly the moments worth reporting,
 // so the pixel rides along with them rather than being wired in separately.
@@ -2380,6 +2391,7 @@ unlockBtn.addEventListener('click', async () => {
         orderId: orderId, token: accessToken, product: lead.product === 'print' ? 'print' : 'digital',
         code: typedCode() || creatorCode(),
         fb: fbBrowserDetails(icId),
+        trybe: trybeVisitorId(),
         childName: childName, email: email,
         extra: extra.map((it) => ({ orderId: it.orderId, token: it.token, product: it.product, childName: it.childName }))
       })
