@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Make your coloring book – Crayonauts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/crayonauts.css">
+<meta name="robots" content="noindex">
+<!-- Meta pixel. Ads are judged on sales, not clicks, so the Purchase event
+     below carries the real dollar value of the book that was bought. Every
+     call goes through fbTrack(), which does nothing at all if the pixel
+     script was blocked - measurement must never be able to break checkout. -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1760133305035577');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+ src="https://www.facebook.com/tr?id=1760133305035577&ev=PageView&noscript=1" alt=""></noscript>
+<!-- TikTok pixel (Justice United Inc's own TikTok Business Center). Like the
+     Meta pixel above: page views here, and checkout + purchase from the page
+     code through ttTrack(), which does nothing if the script is blocked. -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+  ttq.load('DC4SJPBC77U703IGP7R0');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- Trybe Attribution Pixel (Custom Domain) -->
+<script>
+(function(w,d,p,s,u,pl,at) {
+  w._trybe = w._trybe || { pixelCode: p, storeId: s, platform: pl, autoTracking: at, customDomain: 'track.crayonauts.com', serviceUrl: 'https://prod-trybe-platform-6mi3j.ondigitalocean.app/attribution' };
+  var script = d.createElement('script');
+  script.src = u + '/pixel.js';
+  script.async = true;
+  script.setAttribute('data-pixel-code', p);
+  script.setAttribute('data-store-id', s);
+  script.setAttribute('data-platform', pl);
+  script.setAttribute('data-auto-tracking', at);
+  d.head.appendChild(script);
+})(window, document, 'px_211dfbef00f1', '7715c0d8-d693-48e9-8c3b-866630920e2d', 'https://track.crayonauts.com', 'CUSTOM', 'false');
+</script>
+<!-- End Trybe Attribution Pixel -->
+</head>
+<body>
+<div class="app">
+
+<!-- One page, six steps. create.js shows one <section data-step> at a time.
+     Optional URL params: ?theme=superhero  ?mode=family  ?c=CREATORCODE -->
+
+<!-- ================= STEP 1 · UPLOAD ================= -->
+<section data-step="upload">
+  <div class="flow-top">
+    <a class="btn-back" href="index.html" data-keep-creator aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <div class="progress"><span class="on"></span><span></span><span></span></div>
+    <span class="step-count">1 of 3</span>
+  </div>
+  <div class="screen">
+    <div class="segmented" role="group" aria-label="Book type">
+      <button type="button" data-mode="personal" aria-pressed="true">One kid</button>
+      <button type="button" data-mode="family" aria-pressed="false">Family (up to 5)</button>
+    </div>
+
+    <!-- Personal book: one photo -->
+    <div data-show-mode="personal">
+      <h1>Add your kid's photo</h1>
+      <p class="lead">This is who will star on every page.</p>
+      <label class="dropzone" id="personalDrop">
+        <input type="file" id="personalFile" accept="image/*" aria-label="Choose a photo">
+        <span class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+        <span class="display" style="font-weight:600;font-size:22px">Tap to choose a photo</span>
+        <span style="font-size:14px;color:var(--muted)">From your camera roll or take one now</span>
+      </label>
+      <div class="tips"><div>Face to camera</div><div>Good light</div><div>Just one kid</div></div>
+    </div>
+
+    <!-- Family book: up to 5 photos, one person each -->
+    <div data-show-mode="family" class="hidden">
+      <h1>Add your family</h1>
+      <p class="lead">One photo for each person, up to 5. Everyone stars in the book.</p>
+      <div class="family-slots" id="familySlots"><!-- filled by create.js --></div>
+      <p class="tiny hidden" id="familyMinNote" style="margin-top:8px">A family book is two people or more - add at least one more photo.</p>
+      <div class="tips"><div>One person per photo</div><div>Face to camera</div><div>Good light</div></div>
+    </div>
+
+    <div class="grow"></div>
+    <p class="tiny" style="margin-bottom:12px">Your photo is used only to draw your book. It's never sold, and we delete it as soon as your book is finished.</p>
+    <button type="button" class="btn-primary" id="toTheme" disabled>Next: pick a theme</button>
+  </div>
+</section>
+
+<!-- ================= STEP 2 · THEME ================= -->
+<section data-step="theme" class="hidden">
+  <div class="flow-top">
+    <button type="button" class="btn-back" data-go="upload" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="progress"><span class="on"></span><span class="on"></span><span></span></div>
+    <span class="step-count">2 of 3</span>
+  </div>
+  <div class="screen">
+    <h1>Pick a theme</h1>
+    <p class="lead">Every page of the book follows this theme.</p>
+    <div class="theme-grid" id="themeGrid"><!-- filled by create.js from CONFIG.THEMES --></div>
+    <button type="button" class="btn-primary" data-go="details" style="margin-top:22px">Next: details</button>
+  </div>
+</section>
+
+<!-- ================= STEP 3 · NAME + LEVEL ================= -->
+<section data-step="details" class="hidden">
+  <div class="flow-top">
+    <button type="button" class="btn-back" data-go="theme" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="progress"><span class="on"></span><span class="on"></span><span class="on"></span></div>
+    <span class="step-count">3 of 3</span>
+  </div>
+  <div class="screen">
+    <h1><span data-show-mode="personal">Who's the hero?</span><span data-show-mode="family" class="hidden">Your family's book</span></h1>
+    <p class="lead"><span data-show-mode="personal">Their name goes on the cover.</span><span data-show-mode="family" class="hidden">This name goes on the cover.</span></p>
+    <label class="label" for="bookName"><span data-show-mode="personal">First name</span><span data-show-mode="family" class="hidden">Family name (e.g. The Rivera Family)</span></label>
+    <input class="input" id="bookName" type="text" maxlength="40" autocomplete="off" placeholder="e.g. Ava">
+
+    <span class="label" style="margin-top:22px">Drawing level</span>
+    <div class="levels" id="levels"><!-- filled by create.js from CONFIG.LEVELS --></div>
+    <p class="tiny" style="margin-top:8px">Simple = bigger shapes, fewer lines. Detailed = more to color.</p>
+
+    <div class="summary"><img id="summaryPhoto" alt=""><div><b class="js-name">Your kid</b> · <span class="js-theme">Superhero</span><br><span style="color:var(--muted)">15 black-and-white pages</span></div></div>
+    <p class="error hidden" id="detailsError"></p>
+
+    <div class="grow"></div>
+    <button type="button" class="btn-primary" id="startPreview" style="margin-top:20px">See my 2 free pages</button>
+    <p class="tiny" style="text-align:center;margin-top:12px">Free preview · No card needed</p>
+  </div>
+</section>
+
+<!-- ================= STEP 4 · DRAWING THE PREVIEW ================= -->
+<section data-step="drawing" class="hidden">
+  <div class="drawing">
+    <p class="kicker" id="drawKicker">MAKING YOUR PREVIEW</p>
+    <h1>Drawing the first 2 pages…</h1>
+    <div class="drawing-frame"><img src="images/samples/jasmin-superhero-page.jpg" alt=""><div class="drawing-cover" id="drawCover"></div></div>
+    <div class="bar"><span id="drawBar"></span></div>
+    <p id="drawMsg" style="margin-top:12px;font-size:15px;font-weight:700">Finding that smile…</p>
+    <p class="error hidden" id="drawError" style="color:#FFB4A8"></p>
+  </div>
+</section>
+
+<!-- ================= STEP 5 · FREE PREVIEW + CHOOSE ================= -->
+<section data-step="preview" class="hidden">
+  <header class="site-header">
+    <img src="images/crayonauts-logo.svg" alt="Crayonauts" style="height:30px">
+    <button type="button" class="btn-link" data-go="upload" style="color:var(--ink);text-decoration:none">Start over</button>
+  </header>
+  <div class="pad" style="padding-top:4px">
+    <p style="font-size:13px;font-weight:800;letter-spacing:2px;color:#C2412D;margin-bottom:6px">YOUR FREE PREVIEW</p>
+    <h1 style="font-size:30px;line-height:1.05;margin-bottom:6px"><span class="js-name">Your kid</span>'s <span class="js-theme">Superhero</span> book</h1>
+    <p style="font-size:15px;margin-bottom:16px">Here are the first 2 pages. Swipe to see more.</p>
+  </div>
+  <div class="pages">
+    <div class="page-card"><img id="previewPage1" alt="Free page 1"><span class="page-tag">Page 1 · Free</span></div>
+    <div class="page-card"><img id="previewPage2" alt="Free page 2"><span class="page-tag">Page 2 · Free</span></div>
+    <div class="page-card page-locked">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <span>13 more pages<br>waiting for <span class="js-name">your kid</span></span>
+    </div>
+  </div>
+  <div class="pad" style="padding-top:10px;display:flex;flex-direction:column;gap:12px">
+    <h2 style="font-size:24px;margin:6px 0 2px">Unlock all 15 pages</h2>
+    <div id="productList"><!-- filled by create.js from CONFIG.PRODUCTS --></div>
+    <p class="note" id="shipNote">Arrives in 12–14 business days (US). For Christmas, order by <b>Dec 4</b>.</p>
+    <button type="button" class="btn-primary" id="toOrder" style="margin-top:6px">Continue</button>
+    <div class="trust-grid"><span>Secure Stripe checkout</span><span>No subscription</span><span>No account</span></div>
+    <p class="note note-green"><b>Happiness promise:</b> Don't love it? Email us within 14 days and we'll redraw your book once, free.</p>
+  </div>
+  <div class="card" style="margin:26px 20px 0;padding:16px;display:flex;gap:14px;align-items:center">
+    <img src="images/samples/jasmin-superhero-page.jpg" alt="" style="flex:none;width:92px;height:92px;border-radius:12px;object-fit:cover;border:1px solid #E6E1D8">
+    <div style="font-size:14px;line-height:1.45"><b style="font-size:16px">Made for coloring again and again</b><br>The PDF prints at home as many times as you like.</div>
+  </div>
+  <!-- "Not ready yet?" → api.js emailPreview() -->
+  <form id="emailPreviewForm" class="hidden" style="margin:14px 20px 0;padding:16px;border-radius:20px;background:#F6D9D3;font-size:14px;line-height:1.45">
+    <b>Not ready yet?</b> We'll email you this preview so you can finish later.
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="email" required placeholder="you@email.com" aria-label="Email" id="previewEmail" style="flex:1;min-width:0;min-height:48px;border:2px solid var(--ink);border-radius:12px;padding:0 12px;font:600 15px Nunito,sans-serif">
+      <button type="submit" class="btn-dark" id="previewEmailBtn">Send</button>
+    </div>
+  </form>
+  <p class="tiny" style="margin:18px 20px 0;text-align:center;font-size:12px;padding-bottom:32px">Pages are drawn by AI from your photo.</p>
+</section>
+
+<!-- ================= STEP 6 · ORDER SUMMARY → STRIPE ================= -->
+<section data-step="order" class="hidden">
+  <div class="flow-top">
+    <button type="button" class="btn-back" data-go="preview" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span class="display" style="font-weight:600;font-size:22px">Your order</span>
+  </div>
+  <div class="screen" style="gap:16px">
+    <div class="card" style="padding:14px;display:flex;gap:14px;align-items:center">
+      <img id="orderThumb" alt="" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:1px solid #E6E1D8">
+      <div style="font-size:14px;line-height:1.5"><b style="font-size:16px"><span class="js-name">Your kid</span>'s <span class="js-theme">Superhero</span> book</b><br><span id="orderProduct">Printed book · 15 pages</span></div>
+    </div>
+
+    <div>
+      <label class="label" for="orderEmail">Email for your book</label>
+      <input class="input" id="orderEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
+      <p class="tiny" style="margin-top:6px">We email your book here as soon as it's drawn.</p>
+    </div>
+
+    <!-- Creator code from ?c=CODE (see js/common.js) -->
+    <p class="note note-green hidden" id="creatorNote">Creator code <b id="creatorCode"></b> applied</p>
+
+    <!-- Promo code box → api.js checkPromo() -->
+    <form id="promoForm">
+      <label class="label" for="promoCode">Promo code</label>
+      <div style="display:flex;gap:8px">
+        <input class="input" id="promoCode" placeholder="Enter code" autocomplete="off" style="min-height:52px;font-weight:600;font-size:16px">
+        <button type="submit" class="btn-dark">Apply</button>
+      </div>
+      <p class="tiny" id="promoMsg" style="margin-top:6px"></p>
+    </form>
+
+    <div class="totals" id="orderTotals"><!-- filled by create.js --></div>
+    <p class="note">Next you'll pay on Stripe's secure checkout page<span id="addressNote">, where you'll also enter your shipping address</span>.</p>
+    <button type="button" class="btn-primary" id="toStripe">Continue to secure checkout</button>
+    <p class="error hidden" id="checkoutError"></p>
+  </div>
+</section>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/tracking.js"></script>
+<script src="js/api.js"></script>
+<script src="js/create.js"></script>
+</body>
+</html>
