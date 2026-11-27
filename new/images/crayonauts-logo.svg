@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 22 700 180" width="700" height="180"><g>
+  <path d="M34 62 q34 -14 66 6 v92 q-32 -20 -66 -6 z" fill="#E85D4A" stroke="#E85D4A" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M166 62 q-34 -14 -66 6 v92 q32 -20 66 -6 z" fill="none" stroke="#242636" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M100 68 v92" stroke="#242636" stroke-width="9" stroke-linecap="round"/>
+  <path d="M52 96 q22 -8 36 2" fill="none" stroke="#FDF8F0" stroke-width="7" stroke-linecap="round"/><path d="M52 120 q22 -8 36 2" fill="none" stroke="#FDF8F0" stroke-width="7" stroke-linecap="round"/><path d="M148 96 q-22 -8 -36 2" fill="none" stroke="#242636" stroke-width="7" stroke-linecap="round"/></g><path d="M128 130 q-14 -8 -26 -2" fill="none" stroke="#E85D4A" stroke-width="7" stroke-linecap="round"/><g transform="rotate(-140 130 128)">
+  <path d="M130 128 l12.0 19.200000000000003 h-24 z" fill="#E85D4A" stroke="#242636" stroke-width="7" stroke-linejoin="round"/>
+  <rect x="118.0" y="147.2" width="24" height="50.80000000000001" rx="4" fill="#242636" stroke="#242636" stroke-width="7"/>
+  <path d="M118.0 162.44 h24 M118.0 175.648 h24" stroke="#FDF8F0" stroke-width="6"/></g><text x="228" y="140" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="76" font-weight="700" fill="#242636" letter-spacing="-1.5">Crayonauts</text></svg>
