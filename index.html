@@ -26,6 +26,17 @@ fbq('track', 'PageView');
 <noscript><img height="1" width="1" style="display:none"
  src="https://www.facebook.com/tr?id=1760133305035577&ev=PageView&noscript=1" alt=""></noscript>
 
+<!-- TikTok pixel (Justice United Inc's own TikTok Business Center). Like the
+     Meta pixel above: page views here, and checkout + purchase from the page
+     code through ttTrack(), which does nothing if the script is blocked. -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+  ttq.load('DC4SJPBC77U703IGP7R0');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+
 <!-- What a pasted link looks like in a message, a post or a group chat. Without
      these it is a bare URL; with them it is the before-and-after picture, which
      is the whole pitch. -->
@@ -1281,6 +1292,14 @@ function fbTrack(name, params, eventId) {
     else window.fbq('track', name, params || {});
   } catch (err) { /* ignore */ }
 }
+// TikTok's copy of the same moments. Same rule: never able to break a sale.
+// The event id matches Meta's, so a server copy later can share it.
+function ttTrack(name, params, eventId) {
+  try {
+    if (!window.ttq || typeof window.ttq.track !== 'function') return;
+    window.ttq.track(name, params || {}, eventId ? { event_id: eventId } : undefined);
+  } catch (err) { /* ignore */ }
+}
 
 // What the server needs to send its copy of an event to Meta: Meta's own
 // cookie ids (set by the Pixel), and this page's address. Nothing personal.
@@ -1321,7 +1340,7 @@ const PIXEL_EVENTS = {
 };
 
 function track(type) {
-  if (PIXEL_EVENTS[type]) fbTrack(PIXEL_EVENTS[type]);
+  if (PIXEL_EVENTS[type]) { fbTrack(PIXEL_EVENTS[type]); ttTrack(PIXEL_EVENTS[type], { content_type: 'product', content_id: 'coloring-book', currency: 'USD', value: 15 }); }
   try {
     fetch(BACKEND_URL + '/event', {
       method: 'POST',
@@ -2363,6 +2382,7 @@ unlockBtn.addEventListener('click', async () => {
   track('unlock_clicked');
   const icId = 'ic-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
   fbTrack('InitiateCheckout', {}, icId);
+  ttTrack('InitiateCheckout', { content_type: 'product', content_id: 'coloring-book', currency: 'USD' }, icId);
   sendSmsOptin();
   unlockBtn.disabled = true;
   unlockBtn.textContent = 'Taking you to checkout...';
@@ -2719,6 +2739,7 @@ async function reportPurchase(id, urlAmt, cartToken) {
   try { sessionStorage.setItem(sold, '1'); } catch (err) { /* private mode */ }
   if (cents !== null && cents > 0) {
     fbTrack('Purchase', { value: cents / 100, currency: 'USD' }, 'purchase-' + id);
+    ttTrack('Purchase', { value: cents / 100, currency: 'USD', content_type: 'product', content_id: 'coloring-book' }, 'purchase-' + id);
     document.getElementById('reviewAsk').hidden = false;
   }
   // Trybe credits the creator whose link brought this buyer. Only the order
