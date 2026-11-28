@@ -119,12 +119,12 @@
 
   // Links to our other new pages carry the visit along.
   try {
-    document.querySelectorAll('a[href^="create.html"], a[href^="index.html"]').forEach(function (a) {
+    document.querySelectorAll('a[href*="create.html"], a[href="/"]').forEach(function (a) {
       var url = new URL(a.getAttribute("href"), location.href);
       url.searchParams.set("v", visitorId);
       url.searchParams.set("s", source);
       url.searchParams.set("cp", campaign);
-      a.setAttribute("href", url.pathname.split("/").pop() + url.search + url.hash);
+      a.setAttribute("href", url.pathname + url.search + url.hash);
     });
   } catch (e) { /* never let this break the page */ }
 })();

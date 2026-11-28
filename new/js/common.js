@@ -31,7 +31,7 @@
     document.querySelectorAll("a[data-keep-creator]").forEach(function (a) {
       var url = new URL(a.getAttribute("href"), window.location.href);
       if (!url.searchParams.get("c")) url.searchParams.set("c", c);
-      a.setAttribute("href", url.pathname.split("/").pop() + url.search + url.hash);
+      a.setAttribute("href", url.pathname + url.search + url.hash);
     });
   }
 })();
