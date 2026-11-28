@@ -13,7 +13,7 @@ window.CRAYONAUTS_CONFIG = {
   PRODUCTS: {
     pdf:          { name: "Printable PDF",       desc: "Arrives by email in minutes", book: 15, shipping: 0,    family: false },
     print:        { name: "Printed book",        desc: "Printed and mailed (US)",     book: 15, shipping: 9.95, family: false },
-    family_pdf:   { name: "Family book PDF",     desc: "Up to 5 people, by email",    book: 25, shipping: 0,    family: true  },
+    family_pdf:   { name: "Family printable PDF", desc: "Up to 5 people, arrives by email in minutes", book: 25, shipping: 0,    family: true  },
     family_print: { name: "Printed family book", desc: "Printed and mailed (US)",     book: 25, shipping: 9.95, family: true  }
   },
 
