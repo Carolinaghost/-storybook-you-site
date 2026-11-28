@@ -29,6 +29,20 @@
   };
 
   function money(n) { return "$" + n.toFixed(2); }
+
+  /* ---------------- Several books in one order ----------------
+     Same place and shape as the main site's cart (localStorage
+     "crayonauts_cart"), so the page Stripe sends buyers back to clears the
+     paid books as it always has. */
+  var CART_KEY = "crayonauts_cart", MAX_CART = 4;   // plus the one on screen: 5 books
+  function loadCart() {
+    try { var c = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); return Array.isArray(c) ? c.filter(function (it) { return it && it.orderId && it.token; }) : []; }
+    catch (e) { return []; }
+  }
+  function saveCart(items) { try { localStorage.setItem(CART_KEY, JSON.stringify(items || [])); } catch (e) {} }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function itemPrice(it) { return it.family ? CFG.PRODUCTS.family_pdf.book : CFG.PRODUCTS.pdf.book; }
+  function apiProduct(key) { return /print/.test(key) ? "print" : "digital"; }
   function money0(n) { return n % 1 ? money(n) : "$" + n; }
   function themeLabel() { return CFG.THEMES.filter(function (t) { return t.id === state.theme; })[0].label; }
   function bookName() { return state.name.trim() || (state.mode === "family" ? "Your family" : "Your kid"); }
@@ -43,6 +57,7 @@
     window.scrollTo(0, 0);
     if (step === "details") $("#summaryPhoto").src = firstPhotoURL();
     if (step === "order") renderOrder();
+    if (step === "upload") renderCartWaiting();
     refreshText();
   }
   $$("[data-go]").forEach(function (b) { b.addEventListener("click", function () { go(b.getAttribute("data-go")); }); });
@@ -213,17 +228,78 @@
     catch (err) { btn.textContent = "Try again"; }
   });
 
+  function renderCartWaiting() {
+    var n = loadCart().length, box = $("#cartWaiting");
+    if (!box) return;
+    box.classList.toggle("hidden", n === 0);
+    $("#cartWaitingText").textContent = n + (n === 1 ? " book" : " books") + " in your order";
+  }
+  function resetForNextBook() {
+    state.personalFile = null; state.familyFiles = []; state.name = ""; state.previewId = null; state.previewPages = [];
+    $("#bookName").value = "";
+    var drop = $("#personalDrop"); drop.classList.remove("has-photo");
+    $$(".photo, .photo-ok, .photo-change", drop).forEach(function (el) { el.remove(); });
+    try { $("#personalFile").value = ""; } catch (e) {}
+    renderFamilySlots(); updateUploadButton();
+  }
+  $("#addBook").addEventListener("click", function () {
+    var err = $("#addBookError"); err.classList.add("hidden");
+    var cur = API.currentOrder && API.currentOrder();
+    if (!cur || !state.previewPages.filter(Boolean).length) { err.textContent = "See the free preview of this book first, then add it."; err.classList.remove("hidden"); return; }
+    var items = loadCart();
+    if (items.length >= MAX_CART) { err.textContent = "That is the most books we can take in one order."; err.classList.remove("hidden"); return; }
+    if (!items.some(function (it) { return String(it.orderId) === String(cur.orderId); })) {
+      items.push({ orderId: cur.orderId, token: cur.token, childName: state.name.trim(), product: apiProduct(state.product), family: state.mode === "family" });
+    }
+    saveCart(items);
+    resetForNextBook();
+    state.cartOnly = false;
+    go("upload");
+  });
+  $("#checkoutCart").addEventListener("click", function () {
+    if (!loadCart().length) return;
+    state.cartOnly = true;
+    go("order");
+  });
+
   /* ---------------- Step 6: order summary → Stripe ---------------- */
   function renderOrder() {
     var p = CFG.PRODUCTS[state.product];
-    $("#orderThumb").src = state.previewPages[0] || "images/samples/jasmin-superhero-page.jpg";
-    $("#orderProduct").textContent = p.name + " · 15 pages";
-    var html = '<div class="row"><span>Book</span><span>' + money(p.book) + "</span></div>";
-    if (p.shipping) html += '<div class="row"><span>Shipping (US)</span><span>' + money(p.shipping) + "</span></div>";
+    var cart = loadCart();
+    var onlyCart = state.cartOnly && cart.length;
+    var back = $('[data-step="order"] .btn-back'); if (back) back.setAttribute("data-go", onlyCart ? "upload" : "preview");
+    var leadCard = $("#orderThumb").closest(".card");
+    if (leadCard) leadCard.classList.toggle("hidden", !!onlyCart);
+    if (!onlyCart) {
+      $("#orderThumb").src = state.previewPages[0] || "images/samples/jasmin-superhero-page.jpg";
+      $("#orderProduct").textContent = p.name + " · 15 pages";
+    }
+    // Other books already in the order
+    $("#cartBox").classList.toggle("hidden", cart.length === 0);
+    $("#cartBox b").textContent = onlyCart ? "Your order" : "Also in this order";
+    $("#cartList").innerHTML = cart.map(function (it, i) {
+      return '<li style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:4px 0"><span>' + esc(it.childName || "Book " + (i + 1)) +
+        (it.family ? " (family)" : "") + (it.product === "print" ? " · printed + PDF" : " · PDF") + "</span><span>" + money(itemPrice(it)) +
+        ' <button type="button" class="btn-link" data-remove="' + i + '" style="padding:0 0 0 8px;font-size:13px">Remove</button></span></li>';
+    }).join("");
+    $$("[data-remove]", $("#cartList")).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var now = loadCart(); now.splice(Number(b.getAttribute("data-remove")), 1); saveCart(now);
+        if (state.cartOnly && !now.length) { state.cartOnly = false; go("upload"); return; }
+        renderOrder();
+      });
+    });
+    var books = (onlyCart ? 0 : p.book) + cart.reduce(function (a, it) { return a + itemPrice(it); }, 0);
+    var anyPrint = (!onlyCart && p.shipping > 0) || cart.some(function (it) { return it.product === "print"; });
+    var ship = anyPrint ? CFG.PRODUCTS.print.shipping : 0;
+    var count = (onlyCart ? 0 : 1) + cart.length;
+    var html = '<div class="row"><span>' + (count > 1 ? count + " books" : "Book") + "</span><span>" + money(books) + "</span></div>";
+    if (ship) html += '<div class="row"><span>Shipping (US)' + (count > 1 ? " - one box" : "") + "</span><span>" + money(ship) + "</span></div>";
     if (state.promoCode) html += '<div class="row" style="color:#1E7B4D"><span>Promo ' + state.promoCode + "</span><span>applied at checkout</span></div>";
-    html += '<div class="row total"><span>Total</span><span>' + money(p.book + p.shipping) + "</span></div>";
+    html += '<div class="row total"><span>Total</span><span>' + money(books + ship) + "</span></div>";
     $("#orderTotals").innerHTML = html;
-    $("#addressNote").classList.toggle("hidden", !p.shipping);
+    state.orderTotal = books + ship;
+    $("#addressNote").classList.toggle("hidden", !anyPrint);
     var c = window.CrayonautsCreator.get();
     $("#creatorNote").classList.toggle("hidden", !c);
     $("#creatorCode").textContent = c;
@@ -250,14 +326,31 @@
       err.textContent = "Please add the email address your book should go to."; err.classList.remove("hidden");
       $("#orderEmail").focus(); return;
     }
+    var smsOn = $("#smsOpt").checked, phone = $("#smsPhone").value;
+    $("#smsPhoneError").classList.add("hidden");
+    if (smsOn && !usPhone(phone)) { $("#smsPhoneError").classList.remove("hidden"); $("#smsPhone").focus(); return; }
     btn.disabled = true;
-    TRACK.initiateCheckout({ product: state.product, value: p.book + p.shipping, currency: "USD", theme: state.theme, previewId: state.previewId });
+    TRACK.initiateCheckout({ product: state.product, value: state.orderTotal || (p.book + p.shipping), currency: "USD", theme: state.theme, previewId: state.previewId });
+    if (smsOn) API.smsOptin({ phone: phone, promos: $("#smsPromos").checked });
+    var cart = loadCart(), lead = null, extra = cart;
+    if (state.cartOnly && cart.length) { lead = cart[0]; extra = cart.slice(1); }
     try {
-      var r = await API.startCheckout({ previewId: state.previewId, product: state.product, promoCode: state.promoCode, creatorCode: window.CrayonautsCreator.get(), email: email, name: state.name.trim() });
+      var r = await API.startCheckout({ previewId: state.previewId, product: state.product, promoCode: state.promoCode, creatorCode: window.CrayonautsCreator.get(), email: email, name: lead ? (lead.childName || "") : state.name.trim(), lead: lead, extra: extra });
       window.location.href = r.checkoutUrl;
     } catch (e) {
       btn.disabled = false; err.textContent = (e && e.message) || "Couldn't open checkout. Please try again."; err.classList.remove("hidden");
     }
+  });
+
+  /* ---------------- Text-message updates (optional) ---------------- */
+  function usPhone(v) {
+    var d = String(v || "").replace(/\D/g, "");
+    if (d.length === 11 && d[0] === "1") d = d.slice(1);
+    return d.length === 10 && d[0] >= "2" && d[3] >= "2" ? d : "";
+  }
+  $("#smsOpt").addEventListener("change", function () {
+    $("#smsFields").classList.toggle("hidden", !this.checked);
+    if (!this.checked) $("#smsPhoneError").classList.add("hidden");
   });
 
   /* ---------------- Start ---------------- */
@@ -266,4 +359,5 @@
   renderLevels();
   setMode(state.mode);
   refreshText();
+  renderCartWaiting();
 })();

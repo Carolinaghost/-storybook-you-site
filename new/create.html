@@ -94,6 +94,10 @@ fbq('track', 'PageView');
     <div class="grow"></div>
     <p class="tiny" style="margin-bottom:12px">Your photo is used only to draw your book. It's never sold, and we delete it as soon as your book is finished.</p>
     <button type="button" class="btn-primary" id="toTheme" disabled>Next: pick a theme</button>
+    <div class="card hidden" id="cartWaiting" style="margin-top:14px;padding:14px;font-size:14px;line-height:1.45">
+      <b id="cartWaitingText">1 book in your order</b><br>Add this next child above, or
+      <button type="button" class="btn-link" id="checkoutCart" style="padding:4px 0">check out now</button>
+    </div>
   </div>
 </section>
 
@@ -174,6 +178,9 @@ fbq('track', 'PageView');
     <div id="productList"><!-- filled by create.js from CONFIG.PRODUCTS --></div>
     <p class="note" id="shipNote">Arrives in 12–14 business days (US). For Christmas, order by <b>Dec 4</b>.</p>
     <button type="button" class="btn-primary" id="toOrder" style="margin-top:6px">Continue</button>
+    <button type="button" class="btn-dark" id="addBook" style="min-height:52px">+ Add a book for another child</button>
+    <p class="tiny" style="margin-top:-4px;text-align:center">Pay for all of them together. Printed copies ship in one box, shipping charged once.</p>
+    <p class="error hidden" id="addBookError"></p>
     <div class="trust-grid"><span>Secure Stripe checkout</span><span>No subscription</span><span>No account</span></div>
     <p class="note note-green"><b>Happiness promise:</b> Don't love it? Email us within 14 days and we'll redraw your book once, free.</p>
   </div>
@@ -208,6 +215,21 @@ fbq('track', 'PageView');
       <label class="label" for="orderEmail">Email for your book</label>
       <input class="input" id="orderEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
       <p class="tiny" style="margin-top:6px">We email your book here as soon as it's drawn.</p>
+    </div>
+
+    <div class="card hidden" id="cartBox" style="padding:14px">
+      <b style="font-size:15px">Also in this order</b>
+      <ul id="cartList" style="list-style:none;margin:8px 0 0;padding:0;font-size:14px;line-height:1.5"></ul>
+    </div>
+
+    <div class="sms-optin" style="font-size:14px;line-height:1.45">
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="smsOpt" style="width:22px;height:22px;margin-top:1px;flex:none"><span>Text me updates about my order <span style="color:var(--muted)">(optional)</span></span></label>
+      <div id="smsFields" class="hidden" style="margin-top:10px">
+        <input class="input" data-clarity-mask="True" type="tel" id="smsPhone" placeholder="Mobile number (US)" autocomplete="tel" inputmode="tel">
+        <p class="error hidden" id="smsPhoneError">Enter a US mobile number, like (555) 123-4567.</p>
+        <label style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;cursor:pointer"><input type="checkbox" id="smsPromos" style="width:22px;height:22px;margin-top:1px;flex:none"><span>Also text me offers and new themes</span></label>
+        <p class="tiny" style="margin-top:8px">By ticking, you agree to receive the texts you chose from Crayonauts at this number. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. <a href="/legal.html#sms-terms" target="_blank">Text Message Terms</a> &middot; <a href="/legal.html#sms-privacy" target="_blank">Privacy</a></p>
+      </div>
     </div>
 
     <!-- Creator code from ?c=CODE (see js/common.js) -->
