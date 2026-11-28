@@ -176,23 +176,41 @@
     //    book is emailed); printed vs PDF; a typed code wins over a creator
     //    link's code, as on the main site.
     startCheckout: async function (data) {
-      if (!preview) throw new Error("Please make your free preview first.");
-      var isPrint = /print/.test(data.product);
-      saveForReturn({ email: data.email, product: isPrint ? "print" : "digital" });
+      // A cart checked out on its own: its first book leads (and is the one
+      // the return page watches), the rest go as extra books.
+      var lead = data.lead || null;
+      if (!lead && !preview) throw new Error("Please make your free preview first.");
+      var isPrint = lead ? lead.product === "print" : /print/.test(data.product);
+      if (lead) {
+        try { localStorage.setItem(STATE_KEY, JSON.stringify({ orderId: lead.orderId, accessToken: lead.token, childName: lead.childName || "", email: data.email || "", product: lead.product })); } catch (e) {}
+      } else {
+        saveForReturn({ email: data.email, product: isPrint ? "print" : "digital" });
+      }
       var res = await fetch(API + "/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId: preview.orderId, token: preview.token,
+          orderId: lead ? lead.orderId : preview.orderId, token: lead ? lead.token : preview.token,
           product: isPrint ? "print" : "digital",
           code: data.promoCode || data.creatorCode || "",
           fb: TRACK.browserDetails(), trybe: TRACK.trybeVisitorId(),
-          childName: data.name || preview.name || "", email: data.email || "",
-          extra: []
+          childName: data.name || (preview && preview.name) || "", email: data.email || "",
+          extra: (data.extra || []).map(function (it) { return { orderId: it.orderId, token: it.token, product: it.product, childName: it.childName }; })
         })
       });
       var body = await res.json().catch(function () { return {}; });
       if (!res.ok || !body.url) throw new Error(body.detail || body.error || "Couldn't open checkout. Please try again.");
       return { checkoutUrl: body.url };
+    },
+
+    // The order on screen (for "Add a book for another child").
+    currentOrder: function () { return preview && preview.pages.filter(Boolean).length ? { orderId: preview.orderId, token: preview.token } : null; },
+
+    // Optional text updates: sent on its own, never holds up checkout.
+    smsOptin: function (d) {
+      try {
+        fetch(API + "/sms/optin", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: d.phone, orderUpdates: true, promos: !!d.promos, source: "order" }) }).catch(function () {});
+      } catch (e) {}
     },
 
     // 6) Not offered yet on the new pages (the box is hidden).
